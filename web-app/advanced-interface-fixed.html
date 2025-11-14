@@ -881,6 +881,7 @@
                 <span id="jobsText">Ver jobs recientes</span>
               </button>
               <button id="openDocsBtn" class="btn secondary">Abrir Swagger /docs</button>
+              <button id="openBrowserPilotBtn" class="btn secondary">Abrir BrowserPilot</button>
               <button id="logoutBtn" class="btn secondary">Cerrar Sesión</button>
             </div>
 
@@ -998,6 +999,7 @@
     const openImageTabsBtn = document.getElementById("openImageTabsBtn");
     const listJobsBtn = document.getElementById("listJobsBtn");
     const openDocsBtn = document.getElementById("openDocsBtn");
+    const openBrowserPilotBtn = document.getElementById("openBrowserPilotBtn");
     const notificationEl = document.getElementById("notification");
     const jobMetaEl = document.getElementById("jobMeta");
     const jobResponseEl = document.getElementById("jobResponse");
@@ -2223,6 +2225,12 @@
         showNotification("Configura la API Base URL primero", true);
         addLog("❌", "URL API no configurada", "Configura la API Base URL primero", "error");
       }
+    });
+
+    // Abrir BrowserPilot
+    openBrowserPilotBtn.addEventListener("click", () => {
+      window.open("https://browserpilot.onrender.com/", "_blank");
+      addLog("🌐", "BrowserPilot abierto", "Abrí BrowserPilot en nueva pestaña", "info");
     });
 
     // Exportar ZIP
