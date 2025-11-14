@@ -1,0 +1,2277 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scraperr OSINT PWA - Advanced Interface</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#0f172a" />
+
+  <!-- JSZip para exportar ZIP -->
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+
+  <style>
+    :root {
+      --bg: #020617;
+      --bg-soft: #0b1220;
+      --panel: #020617;
+      --panel-soft: #0b1220;
+      --primary: #0ea5e9;
+      --primary-soft: #38bdf8;
+      --accent: #22c55e;
+      --danger: #f97316;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --border: #1f2933;
+      --radius-xl: 22px;
+      --radius: 12px;
+      --shadow-soft: 0 18px 40px rgba(15,23,42,0.85);
+      --font-ui: system-ui,-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: var(--font-ui);
+    }
+
+    body {
+      background: radial-gradient(circle at top, #0f172a 0, #020617 55%, #020617 100%);
+      min-height: 100vh;
+      color: var(--text);
+      padding: 16px;
+      line-height: 1.5;
+    }
+
+    .frame {
+      max-width: 1400px;
+      margin: 0 auto;
+      border-radius: 32px;
+      padding: 1px;
+      background: linear-gradient(135deg, rgba(56,189,248,.4), rgba(129,140,248,.1));
+      box-shadow: var(--shadow-soft);
+    }
+
+    .container {
+      border-radius: 32px;
+      background: radial-gradient(circle at top left, #111827 0, #020617 45%, #020617 100%);
+      overflow: hidden;
+    }
+
+    header {
+      padding: 20px 24px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(148,163,184,.18);
+      backdrop-filter: blur(26px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-badge {
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 20%, #e0f2fe 0, #38bdf8 35%, #0f172a 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: #0b1120;
+      box-shadow: 0 8px 22px rgba(15,23,42,.9);
+    }
+
+    .brand-title {
+      font-weight: 600;
+      letter-spacing: .02em;
+    }
+
+    .brand-sub {
+      font-size: .8rem;
+      color: var(--muted);
+    }
+
+    main {
+      padding: 24px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 900px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .section {
+      background: var(--panel-soft);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 20px;
+      border: 1px solid var(--border);
+    }
+
+    .section-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    h2 {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--primary-soft);
+    }
+
+    .section-sub {
+      font-size: .9rem;
+      color: var(--muted);
+    }
+
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .badge {
+      background: rgba(148,163,184,.12);
+      border-radius: 999px;
+      padding: 4px 12px;
+      font-size: .85rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .badge-status {
+      background: rgba(34,197,94,.15);
+      color: var(--accent);
+    }
+
+    .badge-status.error {
+      background: rgba(249, 115, 22, .15);
+      color: var(--danger);
+    }
+
+    .badge-status.working {
+      background: rgba(251, 191, 36, .15);
+      color: #fbbf24;
+    }
+
+    .inline-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius);
+      padding: 12px 20px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all .2s ease;
+      min-height: 44px;
+    }
+
+    .btn:hover {
+      background: var(--primary-soft);
+      transform: translateY(-2px);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn.secondary {
+      background: rgba(148,163,184,.18);
+      color: var(--text);
+    }
+
+    .btn.secondary:hover {
+      background: rgba(148,163,184,.25);
+    }
+
+    .btn.stop {
+      background: var(--danger);
+    }
+
+    .btn.stop:hover {
+      background: #fb923c;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    input, select, textarea {
+      width: 100%;
+      background: rgba(15,23,42,.35);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      color: var(--text);
+      font-size: 1rem;
+      transition: border-color .2s;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    textarea {
+      min-height: 100px;
+      font-family: inherit;
+      resize: vertical;
+    }
+
+    .small-help {
+      font-size: .85rem;
+      color: var(--muted);
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+
+    .small-help code {
+      background: rgba(0,0,0,.2);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+
+    .response-box {
+      background: rgba(15,23,42,.35);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      font-family: monospace;
+      font-size: .9rem;
+      line-height: 1.4;
+      min-height: 200px;
+      max-height: 300px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .result-preview {
+      background: rgba(15,23,42,.35);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      font-family: monospace;
+      font-size: .9rem;
+      line-height: 1.4;
+      min-height: 200px;
+      max-height: 300px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: rgba(15,23,42,.95);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      color: var(--text);
+      font-weight: 500;
+      box-shadow: 0 10px 30px rgba(0,0,0,.3);
+      transform: translateX(120%);
+      transition: transform .3s ease;
+      z-index: 1000;
+      max-width: 400px;
+    }
+
+    .notification.show {
+      transform: translateX(0);
+    }
+
+    .notification.error {
+      border-left: 4px solid var(--danger);
+    }
+
+    .notification.success {
+      border-left: 4px solid var(--accent);
+    }
+
+    .loading {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .job-meta {
+      font-size: .8rem;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .platform-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 12px;
+      margin: 12px 0;
+    }
+
+    .platform-toggle {
+      background: rgba(148,163,184,.12);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .2s;
+    }
+
+    .platform-toggle:hover {
+      background: rgba(148,163,184,.2);
+    }
+
+    .platform-toggle.active {
+      background: var(--primary);
+      border-color: var(--primary-soft);
+      color: white;
+    }
+
+    .config-section {
+      display: none;
+      background: rgba(15,23,42,.35);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-top: 16px;
+    }
+
+    .content-type-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 10px;
+      margin: 12px 0;
+    }
+
+    .content-type-toggle {
+      background: rgba(148,163,184,.12);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .2s;
+      font-size: 0.85rem;
+    }
+
+    .content-type-toggle:hover {
+      background: rgba(148,163,184,.2);
+    }
+
+    .content-type-toggle.active {
+      background: var(--primary);
+      border-color: var(--primary-soft);
+      color: white;
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: var(--muted);
+      font-size: .9rem;
+      border-top: 1px solid rgba(148,163,184,.18);
+    }
+
+    /* Log panel styles */
+    .log-panel {
+      background: rgba(15,23,42,.35);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      min-height: 300px;
+      max-height: 400px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: .9rem;
+      line-height: 1.4;
+    }
+
+    .log-entry {
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(148,163,184,.1);
+      display: flex;
+      align-items: flex-start;
+    }
+
+    .log-icon {
+      font-size: 1.2rem;
+      margin-right: 10px;
+      min-width: 24px;
+      text-align: center;
+    }
+
+    .log-timestamp {
+      color: var(--muted);
+      font-size: .8rem;
+      margin-bottom: 2px;
+    }
+
+    .log-message {
+      flex: 1;
+    }
+
+    .log-level.info { color: var(--primary-soft); }
+    .log-level.success { color: var(--accent); }
+    .log-level.warning { color: var(--danger); }
+    .log-level.error { color: #ef4444; }
+
+    .progress-bar {
+      height: 8px;
+      background: rgba(148,163,184,.2);
+      border-radius: 4px;
+      margin: 10px 0;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--primary);
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+
+    .progress-text {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      font-size: 0.8rem;
+      line-height: 8px;
+      color: white;
+    }
+
+    .status-card {
+      display: flex;
+      align-items: center;
+      padding: 12px;
+      margin: 8px 0;
+      background: rgba(15,23,42,.35);
+      border-radius: var(--radius);
+      border-left: 4px solid var(--primary);
+    }
+
+    .status-icon {
+      font-size: 1.5rem;
+      margin-right: 10px;
+    }
+
+    .status-info {
+      flex: 1;
+    }
+
+    .status-title {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .status-desc {
+      font-size: .9rem;
+      color: var(--muted);
+    }
+
+    /* Loading indicators and progress bars */
+    .job-progress {
+      margin: 10px 0;
+    }
+
+    .job-progress-title {
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+
+    .job-progress-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .job-progress-details {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    /* Jobs list styles */
+    .jobs-list {
+      background: rgba(15,23,42,.35);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .job-item {
+      padding: 12px;
+      margin: 8px 0;
+      background: rgba(15,23,42,.25);
+      border-radius: var(--radius);
+      border-left: 3px solid var(--primary);
+    }
+
+    .job-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .job-item-title {
+      font-weight: 600;
+    }
+
+    .job-item-status {
+      font-size: .8rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+    }
+
+    .job-item-content {
+      font-size: .9rem;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <div class="container">
+      <header>
+        <div class="brand">
+          <div class="brand-badge">S</div>
+          <div>
+            <div class="brand-title">Scraperr OSINT PWA</div>
+            <div class="brand-sub">Panel Avanzado con Progreso y Control</div>
+          </div>
+        </div>
+        <div class="brand-sub">v5.1 - Advanced Interface</div>
+      </header>
+
+      <main>
+        <!-- Authentication Section -->
+        <div class="section" id="authSection">
+          <div class="section-header-row">
+            <h2>Autenticación Requerida</h2>
+          </div>
+          <div class="auth-form">
+            <div class="form-group">
+              <label for="username">Usuario</label>
+              <input id="username" type="text" placeholder="Introduce tu usuario" />
+            </div>
+            <div class="form-group">
+              <label for="password">Contraseña</label>
+              <input id="password" type="password" placeholder="Introduce tu contraseña" />
+            </div>
+            <button id="loginBtn" class="btn">Iniciar Sesión</button>
+            <p style="margin-top: 15px; font-size: 0.9rem; color: var(--muted);">
+              Para acceder al sistema de scraping avanzado.
+            </p>
+          </div>
+        </div>
+
+        <div class="left-column">
+          <!-- API Configuration Section -->
+          <div class="section" id="apiConfigSection">
+            <div class="section-header-row">
+              <h2>1. API Configuration</h2>
+              <span class="section-sub">Backend: <code>scraperr_api</code></span>
+            </div>
+            <div class="form-group">
+              <label for="apiUrl">API Base URL</label>
+              <input
+                id="apiUrl"
+                type="text"
+                placeholder="Ej: http://localhost:8000"
+                value="http://localhost:8000"
+              />
+              <div class="small-help">
+                Ej: <code>http://localhost:8000</code> (scraperr_api).
+              </div>
+            </div>
+
+            <!-- AI API Keys Configuration -->
+            <div class="form-group">
+              <label for="geminiKey">Google Gemini API Key</label>
+              <input
+                id="geminiKey"
+                type="password"
+                placeholder="Enter your Gemini API key"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="openaiKey">OpenAI API Key</label>
+              <input
+                id="openaiKey"
+                type="password"
+                placeholder="Enter your OpenAI API key"
+              />
+            </div>
+
+            <button id="saveApiKeysBtn" class="btn secondary">Save API Keys</button>
+
+            <div class="form-group" style="margin-top: 15px;">
+              <button id="toggleConfigBtn" class="btn secondary">Advanced Configuration</button>
+              <div id="configSection" class="config-section">
+                <div class="form-group">
+                  <label for="customHeaders">Custom Headers (JSON)</label>
+                  <textarea id="customHeaders" placeholder="Enter custom headers as JSON">{}</textarea>
+                </div>
+                <div class="form-group">
+                  <label for="maxItems">Max Items in Preview</label>
+                  <input id="maxItems" type="number" min="1" max="100" value="10" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Scraping básico -->
+          <div class="section" id="scrapingSection">
+            <div class="section-header-row">
+              <h2>2. Scraping básico</h2>
+              <span class="section-sub">Single job</span>
+            </div>
+            <div class="form-group">
+              <label for="targetUrl">Target URL</label>
+              <input
+                id="targetUrl"
+                type="text"
+                placeholder="Ej: https://quotes.toscrape.com/"
+                value="http://quotes.toscrape.com/"
+              />
+            </div>
+
+            <div class="inline-group">
+              <button class="btn-example" data-url="http://quotes.toscrape.com/">Quotes</button>
+              <button class="btn-example" data-url="https://books.toscrape.com/">Books</button>
+              <button class="btn-example" data-url="https://httpbin.org/html">HTML Test</button>
+            </div>
+
+            <div class="form-group">
+              <label>Tipos de contenido a descargar</label>
+              <div class="content-type-grid">
+                <div class="content-type-toggle active" data-type="text">Texto</div>
+                <div class="content-type-toggle active" data-type="images">Imágenes</div>
+                <div class="content-type-toggle" data-type="videos">Vídeos</div>
+                <div class="content-type-toggle" data-type="links">Enlaces</div>
+                <div class="content-type-toggle" data-type="documents">Documentos</div>
+                <div class="content-type-toggle" data-type="audio">Audio</div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="elementsSelect">Elements to Extract</label>
+              <select id="elementsSelect">
+                <option value="default">Default: Quotes, Books, Headings</option>
+                <option value="custom">Custom (edit JSON below)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="advancedElements">Elements personalizados (JSON)</label>
+              <textarea id="advancedElements" placeholder="Formato: [{name, xpath, url}]">[
+  {
+    "name": "Quotes",
+    "xpath": "//span[@class='text']",
+    "url": "http://quotes.toscrape.com/"
+  }
+]</textarea>
+            </div>
+
+            <div class="inline-group">
+              <button class="btn-example-elements" data-elements='[{"name": "Quotes", "xpath": "//span[@class=\'text\']", "url": "http://quotes.toscrape.com/"}]'>Quotes</button>
+              <button class="btn-example-elements" data-elements='[{"name": "Book Names", "xpath": "//h3/a", "url": "https://books.toscrape.com/"}]'>Book Titles</button>
+              <button class="btn-example-elements" data-elements='[{"name": "Headings", "xpath": "//h1|//h2|//h3", "url": "https://httpbin.org/html"}]'>Headings</button>
+            </div>
+
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input id="multiPageCheckbox" type="checkbox" />
+                Scraping multipágina
+              </label>
+            </div>
+
+            <div class="form-group">
+              <label for="deepDepthSelect">Profundidad (sugerencia para LLM)</label>
+              <select id="deepDepthSelect">
+                <option value="1">1 - Básico</option>
+                <option value="2" selected>2 - Intermedio</option>
+                <option value="3">3 - Profundo</option>
+                <option value="4">4 - Extensivo</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="deepHint">Hint (opcional)</label>
+              <input id="deepHint" type="text" placeholder="Ej: seguir links 'Siguiente', 'Next'..." />
+            </div>
+            <div class="small-help">
+              La profundidad se envía como pista en el campo <code>prompt</code> del Job.
+            </div>
+
+            <button id="runScrapeBtn" class="btn">
+              <span id="scrapeSpinner" class="loading" style="display: none;"></span>
+              <span id="scrapeText">Run Scraping</span>
+            </button>
+            <button id="stopScrapeBtn" class="btn stop" style="display: none;">Stop Job</button>
+          </div>
+
+          <!-- 3. Búsqueda universal OSINT -->
+          <div class="section" id="osintSection">
+            <div class="section-header-row">
+              <h2>3. Búsqueda universal OSINT</h2>
+              <span class="section-sub">Multi-service jobs</span>
+            </div>
+            <div class="form-group">
+              <label for="universalQuery">Query de búsqueda</label>
+              <input
+                id="universalQuery"
+                type="text"
+                placeholder="Ej: 'John Doe' OR 'j.doe@example.com'"
+              />
+            </div>
+
+            <div class="form-group">
+              <label>Plataformas a incluir</label>
+              <div class="platform-grid">
+                <div class="platform-toggle" data-platform="google">Google</div>
+                <div class="platform-toggle" data-platform="twitter">Twitter</div>
+                <div class="platform-toggle" data-platform="facebook">Facebook</div>
+                <div class="platform-toggle" data-platform="linkedin">LinkedIn</div>
+                <div class="platform-toggle" data-platform="github">GitHub</div>
+                <div class="platform-toggle" data-platform="instagram">Instagram</div>
+                <div class="platform-toggle" data-platform="youtube">YouTube</div>
+                <div class="platform-toggle" data-platform="reddit">Reddit</div>
+              </div>
+            </div>
+
+            <button id="runUniversalSearchBtn" class="btn secondary">
+              <span id="universalSpinner" class="loading" style="display: none;"></span>
+              <span id="universalText">Buscar en múltiples servicios</span>
+            </button>
+            <button id="stopUniversalSearchBtn" class="btn stop" style="display: none;">Stop Jobs</button>
+            <div class="small-help">
+              Crea un Job por plataforma, scrapea resultados y arma una vista previa por servicio.
+            </div>
+          </div>
+        </div>
+
+        <div class="right-column">
+          <!-- 4. Búsqueda inversa de imagen -->
+          <div class="section" id="imageSearchSection">
+            <div class="section-header-row">
+              <h2>4. Búsqueda inversa de imagen</h2>
+              <span class="section-sub">Scraping & preview</span>
+            </div>
+            <div class="form-group">
+              <label for="imageUrl">URL de la imagen</label>
+              <input
+                id="imageUrl"
+                type="text"
+                placeholder="Ej: https://ejemplo.com/imagen.jpg"
+              />
+            </div>
+
+            <div class="inline-group">
+              <button class="btn-example-image" data-img="https://picsum.photos/200/300">Example 1</button>
+              <button class="btn-example-image" data-img="https://picsum.photos/300/200">Example 2</button>
+            </div>
+
+            <div class="form-group">
+              <label>Servicios de búsqueda</label>
+              <div class="platform-grid">
+                <div class="platform-toggle platform-image" data-service="google">Google Images</div>
+                <div class="platform-toggle platform-image" data-service="yandex">Yandex</div>
+                <div class="platform-toggle platform-image" data-service="bing">Bing Images</div>
+              </div>
+            </div>
+
+            <div class="inline-group">
+              <button id="runImageSearchBtn" class="btn secondary">
+                <span id="imageSpinner" class="loading" style="display: none;"></span>
+                <span id="imageText">Buscar por imagen (scraping)</span>
+              </button>
+              <button id="openImageTabsBtn" class="btn">Abrir pestañas</button>
+              <button id="stopImageSearchBtn" class="btn stop" style="display: none;">Stop Jobs</button>
+            </div>
+            <div class="small-help">
+              “Buscar por imagen” genera jobs sobre las páginas de resultados; “Abrir pestañas” sólo abre los buscadores con esa imagen.
+            </div>
+          </div>
+
+          <!-- Content Type Filters -->
+          <div class="section">
+            <div class="section-header-row">
+              <h2>Filtros de Contenido</h2>
+              <span class="section-sub">Tipos de contenido a descargar</span>
+            </div>
+
+            <div class="content-type-grid">
+              <div class="content-type-toggle active" data-type="text">Texto</div>
+              <div class="content-type-toggle active" data-type="images">Imágenes</div>
+              <div class="content-type-toggle" data-type="videos">Vídeos</div>
+              <div class="content-type-toggle" data-type="links">Enlaces</div>
+              <div class="content-type-toggle" data-type="documents">Documentos</div>
+              <div class="content-type-toggle" data-type="audio">Audio</div>
+            </div>
+
+            <div style="margin-top: 15px;">
+              <button id="selectAllContentBtn" class="btn secondary">Seleccionar Todo</button>
+              <button id="clearAllContentBtn" class="btn secondary">Limpiar Todo</button>
+            </div>
+          </div>
+
+          <!-- 5. Otros accesos -->
+          <div class="section">
+            <div class="section-header-row">
+              <h2>5. Jobs & Docs rápidos</h2>
+              <span class="section-sub">API shortcuts</span>
+            </div>
+            <div class="inline-group">
+              <button id="listJobsBtn" class="btn secondary">
+                <span id="jobsSpinner" class="loading" style="display: none;"></span>
+                <span id="jobsText">Ver jobs recientes</span>
+              </button>
+              <button id="openDocsBtn" class="btn secondary">Abrir Swagger /docs</button>
+              <button id="logoutBtn" class="btn secondary">Cerrar Sesión</button>
+            </div>
+
+            <div class="inline-group" style="margin-top: 10px;">
+              <button id="exportZipBtn" class="btn">Exportar resultados ZIP</button>
+              <button id="clearResultsBtn" class="btn secondary">Limpiar resultados</button>
+            </div>
+          </div>
+
+          <!-- Estado / respuesta -->
+          <div class="section">
+            <div class="section-header-row">
+              <h2>Estado / respuesta</h2>
+              <span class="section-sub">Job actual / OSINT multi-servicio</span>
+            </div>
+            <div class="tag-row">
+              <span class="badge badge-status" id="statusBadge">Idle</span>
+              <span class="badge">Vista previa limitada a <span id="badgeMaxItems">10</span> ítems</span>
+            </div>
+            <div class="job-meta" id="jobMeta">
+              Todavía no se envió ningún job.
+            </div>
+            
+            <!-- Progress indicators for multiple jobs -->
+            <div id="progressIndicators">
+              <!-- Dynamic progress bars will be added here -->
+            </div>
+            
+            <div class="response-box" id="jobResponse">
+              Esperando que envíes un scraping o búsqueda OSINT.
+            </div>
+          </div>
+
+          <!-- Vista previa / resumen -->
+          <div class="section">
+            <div class="section-header-row">
+              <h2>Vista previa / resumen</h2>
+              <span class="section-sub">Recorte de datos para inspección rápida</span>
+            </div>
+            <div class="result-preview" id="resultPreview">
+              Cuando el job termine, verás acá un resumen estructurado.
+            </div>
+          </div>
+
+          <!-- Jobs list section -->
+          <div class="section">
+            <div class="section-header-row">
+              <h2>Trabajos Recientes</h2>
+              <span class="section-sub">Lista de trabajos ejecutados</span>
+            </div>
+            <div class="jobs-list" id="jobsList">
+              <div style="text-align: center; color: var(--muted); padding: 20px;">
+                No hay trabajos recientes. Haz clic en "Ver jobs recientes" para cargarlos.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Log Panel -->
+        <div class="section" style="grid-column: 1 / -1; margin-top: -15px;">
+          <div class="section-header-row">
+            <h2>📋 Panel de Logs - Sistema de Scraping</h2>
+            <span class="section-sub">Registros detallados de actividades</span>
+          </div>
+
+          <div class="log-panel" id="logPanel">
+            <div class="log-entry">
+              <div class="log-icon">✅</div>
+              <div class="log-message">
+                <div class="log-timestamp" id="logTimestamp">Cargando...</div>
+                <div class="log-level success">Aplicación inicializada correctamente</div>
+                <div class="log-desc">Scraperr OSINT PWA v5.1 cargado y listo para usar</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top: 15px; display: flex; gap: 10px;">
+            <button id="clearLogsBtn" class="btn secondary">Limpiar Logs</button>
+            <button id="downloadLogsBtn" class="btn secondary">Descargar Logs</button>
+            <button id="toggleLogDetailsBtn" class="btn secondary">Mostrar/Ocultar Detalles</button>
+          </div>
+        </div>
+      </main>
+
+      <div id="notification" class="notification"></div>
+
+      <footer>
+        <span>Scraperr OSINT PWA • Cliente avanzado sobre tu backend <code>scraperr_api</code></span>
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    // Elements
+    const authSection = document.getElementById("authSection");
+    const apiConfigSection = document.getElementById("apiConfigSection");
+    const scrapingSection = document.getElementById("scrapingSection");
+    const osintSection = document.getElementById("osintSection");
+    const imageSearchSection = document.getElementById("imageSearchSection");
+    const apiUrlInput = document.getElementById("apiUrl");
+    const targetUrlInput = document.getElementById("targetUrl");
+    const elementsSelect = document.getElementById("elementsSelect");
+    const advancedElements = document.getElementById("advancedElements");
+    const multiPageCheckbox = document.getElementById("multiPageCheckbox");
+    const deepDepthSelect = document.getElementById("deepDepthSelect");
+    const deepHintInput = document.getElementById("deepHint");
+    const runScrapeBtn = document.getElementById("runScrapeBtn");
+    const stopScrapeBtn = document.getElementById("stopScrapeBtn");
+    const universalQueryInput = document.getElementById("universalQuery");
+    const runUniversalSearchBtn = document.getElementById("runUniversalSearchBtn");
+    const stopUniversalSearchBtn = document.getElementById("stopUniversalSearchBtn");
+    const imageUrlInput = document.getElementById("imageUrl");
+    const runImageSearchBtn = document.getElementById("runImageSearchBtn");
+    const stopImageSearchBtn = document.getElementById("stopImageSearchBtn");
+    const openImageTabsBtn = document.getElementById("openImageTabsBtn");
+    const listJobsBtn = document.getElementById("listJobsBtn");
+    const openDocsBtn = document.getElementById("openDocsBtn");
+    const notificationEl = document.getElementById("notification");
+    const jobMetaEl = document.getElementById("jobMeta");
+    const jobResponseEl = document.getElementById("jobResponse");
+    const resultPreviewEl = document.getElementById("resultPreview");
+    const statusBadge = document.getElementById("statusBadge");
+    const badgeMaxItems = document.getElementById("badgeMaxItems");
+    const exportZipBtn = document.getElementById("exportZipBtn");
+    const clearResultsBtn = document.getElementById("clearResultsBtn");
+    const maxItemsInput = document.getElementById("maxItems");
+    const usernameInput = document.getElementById("username");
+    const passwordInput = document.getElementById("password");
+    const loginBtn = document.getElementById("loginBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const jobsList = document.getElementById("jobsList");
+    const progressIndicators = document.getElementById("progressIndicators");
+
+    // AI API Key elements
+    const geminiKeyInput = document.getElementById("geminiKey");
+    const openaiKeyInput = document.getElementById("openaiKey");
+    const saveApiKeysBtn = document.getElementById("saveApiKeysBtn");
+    const toggleConfigBtn = document.getElementById("toggleConfigBtn");
+    const configSection = document.getElementById("configSection");
+
+    // Content type elements
+    const contentTypeToggles = document.querySelectorAll(".content-type-toggle");
+    const selectAllContentBtn = document.getElementById("selectAllContentBtn");
+    const clearAllContentBtn = document.getElementById("clearAllContentBtn");
+
+    // Platform toggles
+    const platformToggles = document.querySelectorAll(".platform-toggle:not(.platform-image)");
+    const imageToggles = document.querySelectorAll(".platform-toggle.platform-image");
+
+    // Spinner elements
+    const scrapeSpinner = document.getElementById("scrapeSpinner");
+    const scrapeText = document.getElementById("scrapeText");
+    const universalSpinner = document.getElementById("universalSpinner");
+    const universalText = document.getElementById("universalText");
+    const imageSpinner = document.getElementById("imageSpinner");
+    const imageText = document.getElementById("imageText");
+    const jobsSpinner = document.getElementById("jobsSpinner");
+    const jobsText = document.getElementById("jobsText");
+
+    // Log panel elements
+    const logPanel = document.getElementById("logPanel");
+    const clearLogsBtn = document.getElementById("clearLogsBtn");
+    const downloadLogsBtn = document.getElementById("downloadLogsBtn");
+    const toggleLogDetailsBtn = document.getElementById("toggleLogDetailsBtn");
+    const logTimestamp = document.getElementById("logTimestamp");
+
+    // Variables de estado
+    let lastRawResults = null;
+    let lastPreviewData = null;
+    let selectedPlatforms = [];
+    let selectedImageServices = [];
+    let selectedContentTypes = ['text', 'images']; // Default selections
+    let isAuthenticated = false;
+    let isScraping = false;
+    let currentJobIds = []; // Track running job IDs
+    let jobProgress = {}; // Track progress for each job
+
+    // Initialize timestamp
+    function updateTimestamp() {
+      logTimestamp.textContent = new Date().toISOString().slice(0, 19).replace('T', ' ');
+    }
+    updateTimestamp();
+
+    // Periodically update timestamp
+    setInterval(updateTimestamp, 1000);
+
+    // Inicialización
+    document.addEventListener("DOMContentLoaded", () => {
+      // Verificar autenticación
+      isAuthenticated = localStorage.getItem("scraperr_authenticated") === "true";
+
+      if (isAuthenticated) {
+        showMainInterface();
+      } else {
+        showAuthInterface();
+      }
+
+      // Cargar configuración desde localStorage
+      const savedUrl = localStorage.getItem("scraperr_api_url");
+      if (savedUrl) apiUrlInput.value = savedUrl;
+
+      const savedMaxItems = localStorage.getItem("scraperr_max_items");
+      if (savedMaxItems) {
+        maxItemsInput.value = savedMaxItems;
+        badgeMaxItems.textContent = savedMaxItems;
+      }
+
+      const savedGeminiKey = localStorage.getItem("gemini_api_key");
+      if (savedGeminiKey) geminiKeyInput.value = savedGeminiKey;
+
+      const savedOpenaiKey = localStorage.getItem("openai_api_key");
+      if (savedOpenaiKey) openaiKeyInput.value = savedOpenaiKey;
+
+      // Event listeners para guardar configuración
+      apiUrlInput.addEventListener("change", () => {
+        localStorage.setItem("scraperr_api_url", apiUrlInput.value);
+        addLog("📡", "Conexión API actualizada", `Nueva URL: ${apiUrlInput.value}`, "info");
+      });
+
+      maxItemsInput.addEventListener("change", () => {
+        localStorage.setItem("scraperr_max_items", maxItemsInput.value);
+        badgeMaxItems.textContent = maxItemsInput.value;
+        addLog("⚙️", "Límite de elementos actualizado", `Nuevo límite: ${maxItemsInput.value}`, "info");
+      });
+
+      // Event listeners para toggles de plataforma
+      platformToggles.forEach(toggle => {
+        toggle.addEventListener("click", () => {
+          toggle.classList.toggle("active");
+          const platform = toggle.getAttribute("data-platform");
+
+          if (toggle.classList.contains("active")) {
+            if (!selectedPlatforms.includes(platform)) {
+              selectedPlatforms.push(platform);
+              addLog("🔄", "Plataforma añadida", `Búsqueda en ${platform}`, "info");
+            }
+          } else {
+            selectedPlatforms = selectedPlatforms.filter(p => p !== platform);
+            addLog("🔄", "Plataforma removida", `Búsqueda en ${platform} desactivada`, "info");
+          }
+        });
+      });
+
+      imageToggles.forEach(toggle => {
+        toggle.addEventListener("click", () => {
+          toggle.classList.toggle("active");
+          const service = toggle.getAttribute("data-service");
+
+          if (toggle.classList.contains("active")) {
+            if (!selectedImageServices.includes(service)) {
+              selectedImageServices.push(service);
+              addLog("🖼️", "Servicio de imagen añadido", `Búsqueda en ${service}`, "info");
+            }
+          } else {
+            selectedImageServices = selectedImageServices.filter(s => s !== service);
+            addLog("🖼️", "Servicio de imagen removido", `Búsqueda en ${service} desactivada`, "info");
+          }
+        });
+      });
+
+      // Content type toggles
+      contentTypeToggles.forEach(toggle => {
+        toggle.addEventListener("click", () => {
+          toggle.classList.toggle("active");
+          const type = toggle.getAttribute("data-type");
+
+          if (toggle.classList.contains("active")) {
+            if (!selectedContentTypes.includes(type)) {
+              selectedContentTypes.push(type);
+              addLog("📋", "Tipo de contenido añadido", `Descargando ${type}`, "info");
+            }
+          } else {
+            selectedContentTypes = selectedContentTypes.filter(t => t !== type);
+            addLog("📋", "Tipo de contenido removido", `Dejando de descargar ${type}`, "info");
+          }
+        });
+      });
+
+      // Event listeners para botones de ejemplo
+      document.querySelectorAll(".btn-example").forEach(btn => {
+        btn.addEventListener("click", () => {
+          targetUrlInput.value = btn.getAttribute("data-url");
+          addLog("🔗", "URL actualizada", `Nueva URL: ${targetUrlInput.value}`, "info");
+        });
+      });
+
+      document.querySelectorAll(".btn-example-elements").forEach(btn => {
+        btn.addEventListener("click", () => {
+          advancedElements.value = btn.getAttribute("data-elements");
+          addLog("📝", "Elementos actualizados", "Nuevos elementos de scraping configurados", "info");
+        });
+      });
+
+      document.querySelectorAll(".btn-example-image").forEach(btn => {
+        btn.addEventListener("click", () => {
+          imageUrlInput.value = btn.getAttribute("data-img");
+          addLog("🖼️", "Imagen actualizada", `Nueva imagen: ${imageUrlInput.value}`, "info");
+        });
+      });
+
+      // Content type buttons
+      selectAllContentBtn.addEventListener("click", () => {
+        contentTypeToggles.forEach(toggle => {
+          toggle.classList.add("active");
+          const type = toggle.getAttribute("data-type");
+          if (!selectedContentTypes.includes(type)) {
+            selectedContentTypes.push(type);
+          }
+        });
+        addLog("📋", "Todos los tipos seleccionados", "Descargando todo tipo de contenido", "success");
+      });
+
+      clearAllContentBtn.addEventListener("click", () => {
+        contentTypeToggles.forEach(toggle => {
+          toggle.classList.remove("active");
+        });
+        selectedContentTypes = [];
+        addLog("📋", "Tipos de contenido limpiados", "No se descargará ningún tipo de contenido", "warning");
+      });
+
+      // Log panel buttons
+      clearLogsBtn.addEventListener("click", () => {
+        logPanel.innerHTML = '';
+        addLog("🧹", "Logs limpiados", "Historial de actividades eliminado", "info");
+      });
+
+      downloadLogsBtn.addEventListener("click", () => {
+        const logContent = Array.from(logPanel.children).map(entry => {
+          const timestamp = entry.querySelector('.log-timestamp').textContent;
+          const level = entry.querySelector('.log-level.success, .log-level.info, .log-level.warning, .log-level.error').textContent;
+          const desc = entry.querySelector('.log-desc').textContent;
+          return `[${timestamp}] ${level} - ${desc}`;
+        }).join('\n');
+
+        const blob = new Blob([logContent], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'scraperr-logs.txt';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        addLog("📥", "Logs descargados", "Archivo de logs guardado correctamente", "success");
+      });
+
+      toggleLogDetailsBtn.addEventListener("click", () => {
+        document.querySelectorAll('.log-desc').forEach(desc => {
+          desc.style.display = desc.style.display === 'none' ? 'block' : 'none';
+        });
+        addLog("👁️", "Detalles de logs", `Detalles ${document.querySelectorAll('.log-desc[style="display: none;"]').length ? 'mostrados' : 'ocultos'}`, "info");
+      });
+    });
+
+    // Función para mostrar la interfaz de autenticación
+    function showAuthInterface() {
+      authSection.style.display = "block";
+      apiConfigSection.style.display = "none";
+      scrapingSection.style.display = "none";
+      osintSection.style.display = "none";
+      imageSearchSection.style.display = "none";
+      addLog("🔒", "Autenticación requerida", "Por favor, inicia sesión para continuar", "warning");
+    }
+
+    // Función para mostrar la interfaz principal
+    function showMainInterface() {
+      authSection.style.display = "none";
+      apiConfigSection.style.display = "block";
+      scrapingSection.style.display = "block";
+      osintSection.style.display = "block";
+      imageSearchSection.style.display = "block";
+      addLog("🔓", "Sesión iniciada", "Acceso concedido a la interfaz principal", "success");
+    }
+
+    // Función para autenticar
+    loginBtn.addEventListener("click", () => {
+      const username = usernameInput.value.trim();
+      const password = passwordInput.value.trim();
+
+      // Validación simple - en una implementación real esto sería una llamada API
+      if (username && password) {
+        // Aquí se haría una llamada API real para autenticar
+        // Por ahora, simulamos que la autenticación es exitosa
+        localStorage.setItem("scraperr_authenticated", "true");
+        isAuthenticated = true;
+        showMainInterface();
+        showNotification("Autenticación exitosa");
+        addLog("👤", "Inicio de sesión", `Usuario: ${username}`, "success");
+      } else {
+        showNotification("Usuario y contraseña son requeridos", true);
+        addLog("❌", "Error de autenticación", "Usuario o contraseña vacíos", "error");
+      }
+    });
+
+    // Función para cerrar sesión
+    logoutBtn.addEventListener("click", () => {
+      localStorage.removeItem("scraperr_authenticated");
+      localStorage.removeItem("scraperr_api_url");
+      localStorage.removeItem("scraperr_max_items");
+      localStorage.removeItem("gemini_api_key");
+      localStorage.removeItem("openai_api_key");
+      isAuthenticated = false;
+      usernameInput.value = "";
+      passwordInput.value = "";
+      showAuthInterface();
+      showNotification("Sesión cerrada");
+      addLog("👋", "Cierre de sesión", "La sesión ha sido cerrada", "info");
+    });
+
+    // Función para agregar un log al panel
+    function addLog(icon, title, description, level = 'info') {
+      const timestamp = new Date().toISOString().slice(0, 19).replace('T', ' ');
+      const logEntry = document.createElement('div');
+      logEntry.className = 'log-entry';
+
+      logEntry.innerHTML = `
+        <div class="log-icon">${icon}</div>
+        <div class="log-message">
+          <div class="log-timestamp">${timestamp}</div>
+          <div class="log-level ${level}">${title}</div>
+          <div class="log-desc">${description}</div>
+        </div>
+      `;
+
+      logPanel.insertBefore(logEntry, logPanel.firstChild);
+
+      // Mantener solo los últimos 50 registros
+      if (logPanel.children.length > 50) {
+        logPanel.removeChild(logPanel.lastChild);
+      }
+
+      // Hacer scroll al nuevo log
+      logPanel.scrollTop = 0;
+    }
+
+    // Función para mostrar notificaciones
+    function showNotification(text, isError = false) {
+      notificationEl.textContent = text;
+      notificationEl.className = "notification";
+      if (isError) {
+        notificationEl.classList.add("error");
+      } else {
+        notificationEl.classList.add("success");
+      }
+      notificationEl.classList.add("show");
+
+      setTimeout(() => {
+        notificationEl.classList.remove("show");
+      }, 5000);
+    }
+
+    // Función para actualizar estado
+    function setStatus(status) {
+      statusBadge.textContent = status;
+      statusBadge.className = "badge badge-status";
+      if (status.includes("…")) {
+        statusBadge.classList.add("working");
+      } else if (status.toLowerCase().includes("error") || status.toLowerCase().includes("fail")) {
+        statusBadge.classList.add("error");
+      } else if (status.toLowerCase() === "idle" || status.toLowerCase() === "completed") {
+        statusBadge.classList.add("success");
+      }
+    }
+
+    // Llamada genérica a API con manejo de expiración JWT
+    async function callApi(path, method = "GET", body = null) {
+      // Verificar autenticación
+      if (!isAuthenticated) {
+        showNotification("Debes autenticarte primero", true);
+        throw new Error("No autenticado");
+      }
+
+      const url = localStorage.getItem("scraperr_api_url") || apiUrlInput.value.trim();
+      if (!url) {
+        showNotification("Configura primero la API Base URL", true);
+        throw new Error("API URL vacía");
+      }
+
+      const fullUrl = url.endsWith("/") ? url + path.replace(/^\//, "") : url + path;
+
+      const options = {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+        }
+      };
+
+      if (body) {
+        options.body = JSON.stringify(body);
+      }
+
+      let response;
+      try {
+        response = await fetch(fullUrl, options);
+      } catch (networkError) {
+        addLog("❌", "Error de red", `No se pudo conectar a la API: ${networkError.message}`, "error");
+        showNotification(`Error de red: ${networkError.message}`, true);
+        throw new Error(`Error de red: ${networkError.message}`);
+      }
+
+      // Manejar expiración de token JWT
+      if (response.status === 401) {
+        const errorText = await response.text();
+        if (errorText.includes("Signature has expired") || errorText.includes("expired")) {
+          addLog("⚠️", "Token expirado", "Intentando renovar token...", "warning");
+          // En una implementación real, aquí se renovaría el token con refresh token
+          // Por ahora, solicitamos al usuario que vuelva a iniciar sesión
+          showNotification("Tu sesión ha expirado. Por favor, vuelve a iniciar sesión.", true);
+          localStorage.removeItem("scraperr_authenticated");
+          isAuthenticated = false;
+          showAuthInterface();
+          throw new Error("Token expirado");
+        }
+      }
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        addLog("❌", "Error de API", `Código: ${response.status}, Mensaje: ${errorText}`, "error");
+
+        // Check if it's an authentication error
+        if (response.status === 401 || response.status === 403) {
+          showNotification("Error de autenticación. Verifica tu sesión.", true);
+        } else {
+          showNotification(`API error ${response.status}: ${errorText}`, true);
+        }
+        throw new Error(`API error ${response.status}: ${errorText}`);
+      }
+
+      return { data: await response.json(), response };
+    }
+
+    // Función para construir elementos de scraping
+    function buildElementsFromSelection() {
+      if (elementsSelect.value === "custom") {
+        try {
+          return JSON.parse(advancedElements.value);
+        } catch (e) {
+          addLog("❌", "Error en elementos JSON", e.message, "error");
+          showNotification("JSON de elementos inválido: " + e.message, true);
+          throw e;
+        }
+      }
+
+      // Elementos por defecto según la URL y tipos de contenido seleccionados
+      const url = targetUrlInput.value.toLowerCase();
+      const elements = [];
+
+      if (selectedContentTypes.includes('text')) {
+        if (url.includes("quotes.toscrape.com")) {
+          elements.push(
+            { name: "Quotes", xpath: "//span[@class='text']", url: targetUrlInput.value },
+            { name: "Authors", xpath: "//small[@class='author']", url: targetUrlInput.value }
+          );
+          addLog("📝", "Elementos de texto detectados", "Identificados citas y autores", "info");
+        } else if (url.includes("books.toscrape.com")) {
+          elements.push(
+            { name: "Titles", xpath: "//h3/a", url: targetUrlInput.value },
+            { name: "Prices", xpath: "//p[@class='price_color']", url: targetUrlInput.value }
+          );
+          addLog("📝", "Elementos de texto detectados", "Identificados títulos y precios", "info");
+        } else {
+          elements.push(
+            { name: "Headings", xpath: "//h1|//h2|//h3", url: targetUrlInput.value },
+            { name: "Paragraphs", xpath: "//p", url: targetUrlInput.value }
+          );
+          addLog("📝", "Elementos de texto detectados", "Detectados encabezados y párrafos", "info");
+        }
+      }
+
+      if (selectedContentTypes.includes('images')) {
+        elements.push({ name: "Images", xpath: "//img/@src", url: targetUrlInput.value });
+        addLog("🖼️", "Elementos de imágenes detectados", "Configurado scraping de imágenes", "info");
+      }
+
+      if (selectedContentTypes.includes('links')) {
+        elements.push({ name: "Links", xpath: "//a/@href", url: targetUrlInput.value });
+        addLog("🔗", "Elementos de enlaces detectados", "Configurado scraping de enlaces", "info");
+      }
+
+      if (selectedContentTypes.includes('videos')) {
+        elements.push({ name: "Videos", xpath: "//video/@src | //iframe/@src", url: targetUrlInput.value });
+        addLog("📹", "Elementos de video detectados", "Configurado scraping de videos", "info");
+      }
+
+      if (selectedContentTypes.includes('documents')) {
+        elements.push({ name: "Documents", xpath: "//a[contains(@href, '.pdf') or contains(@href, '.doc') or contains(@href, '.docx')]/@href", url: targetUrlInput.value });
+        addLog("📄", "Elementos de documentos detectados", "Configurado scraping de documentos", "info");
+      }
+
+      if (selectedContentTypes.includes('audio')) {
+        elements.push({ name: "Audio", xpath: "//audio/@src", url: targetUrlInput.value });
+        addLog("🎵", "Elementos de audio detectados", "Configurado scraping de audio", "info");
+      }
+
+      return elements;
+    }
+
+    // Función para construir opciones del job
+    function buildJobOptions() {
+      return {
+        multi_page_scrape: multiPageCheckbox.checked,
+        custom_headers: {},
+        proxies: [],
+        site_map: null,
+        collect_media: selectedContentTypes.includes('images') || selectedContentTypes.includes('videos') || selectedContentTypes.includes('audio'),
+        return_html: false,
+        custom_cookies: []
+      };
+    }
+
+    // Función para crear un elemento de progreso
+    function createJobProgressElement(jobId, url) {
+      const progressDiv = document.createElement('div');
+      progressDiv.className = 'job-progress';
+      progressDiv.id = `progress-${jobId}`;
+      
+      progressDiv.innerHTML = `
+        <div class="job-progress-title">Job: ${jobId.substring(0, 8)}...</div>
+        <div class="job-progress-bar">
+          <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill-${jobId}" style="width: 0%"></div>
+            <div class="progress-text" id="progress-text-${jobId}">0%</div>
+          </div>
+          <div class="job-progress-details">
+            ${url}
+          </div>
+        </div>
+      `;
+      
+      progressIndicators.appendChild(progressDiv);
+    }
+
+    // Función para actualizar el progreso de un job
+    function updateJobProgress(jobId, progressPercent, status) {
+      if (document.getElementById(`progress-fill-${jobId}`)) {
+        document.getElementById(`progress-fill-${jobId}`).style.width = `${progressPercent}%`;
+        document.getElementById(`progress-text-${jobId}`).textContent = `${progressPercent}%`;
+        
+        // Actualizar el texto según el estado
+        if (status) {
+          const statusText = document.getElementById(`progress-text-${jobId}`);
+          if (statusText) {
+            statusText.textContent = `${progressPercent}% - ${status}`;
+          }
+        }
+      }
+      
+      // También actualizar el área principal si es el job activo
+      if (currentJobIds[0] === jobId) {
+        jobMetaEl.textContent = `Job ${jobId} – Estado: ${status || 'Processing'}, Progreso: ${progressPercent}%`;
+      }
+    }
+
+    // Función para eliminar un elemento de progreso
+    function removeJobProgressElement(jobId) {
+      const progressElement = document.getElementById(`progress-${jobId}`);
+      if (progressElement) {
+        progressElement.remove();
+      }
+    }
+
+    // Esperar a que un job termine
+    async function waitForJobCompletion(jobId, maxWaitMs = 60000, intervalMs = 2000) {
+      const start = Date.now();
+      let lastData = null;
+      let previousStatus = '';
+
+      // Inicializar el progreso para este job
+      updateJobProgress(jobId, 0, 'En cola');
+      jobMetaEl.textContent = `Job ${jobId} – Esperando inicio...`;
+
+      while (Date.now() - start < maxWaitMs) {
+        try {
+          const { data } = await callApi(`/api/job/${encodeURIComponent(jobId)}`, "GET");
+          lastData = data;
+
+          const status = (data.status || data.Status || data.state || "").toString();
+          
+          // Actualizar el progreso basado en el estado
+          let progress = 0;
+          if (status.toLowerCase() === 'received') {
+            progress = 10;
+            updateJobProgress(jobId, progress, 'Recibido');
+          } else if (status.toLowerCase() === 'queued') {
+            progress = 15;
+            updateJobProgress(jobId, progress, 'En cola');
+          } else if (status.toLowerCase() === 'processing') {
+            progress = 50;
+            updateJobProgress(jobId, progress, 'Procesando');
+          } else if (status.toLowerCase() === 'completed') {
+            progress = 100;
+            updateJobProgress(jobId, progress, 'Completado');
+          } else if (status.toLowerCase() === 'failed' || status.toLowerCase() === 'error') {
+            progress = 100;
+            updateJobProgress(jobId, progress, 'Fallido');
+          } else {
+            // Para otros estados, estimar el progreso
+            progress = 30;
+          }
+
+          // Actualizar solo si el estado cambió
+          if (status !== previousStatus) {
+            jobMetaEl.textContent = `Job ${jobId} – Estado: ${status}, Progreso: ${progress}%`;
+            previousStatus = status;
+          }
+
+          jobResponseEl.textContent = JSON.stringify(data, null, 2);
+          setStatus(status || "Unknown");
+
+          if (status.toLowerCase() === "completed" || status.toLowerCase() === "failed" || status.toLowerCase() === "error") {
+            return data;
+          }
+        } catch (error) {
+          console.error("Error getting job status:", error);
+          jobMetaEl.textContent = `Job ${jobId} – Error retrieving status: ${error.message}`;
+          setStatus("Error");
+          throw error;
+        }
+
+        await new Promise(resolve => setTimeout(resolve, intervalMs));
+      }
+
+      throw new Error(`Job ${jobId} no terminó después de ${maxWaitMs}ms`);
+    }
+
+    // Tracking de elementos encontrados
+    let elementCount = 0;
+    
+    // Función para contar elementos encontrados
+    function countElementsInResult(result) {
+      let count = 0;
+      
+      if (Array.isArray(result)) {
+        count += result.length;
+        // Recursivamente contar en objetos anidados
+        for (const item of result) {
+          if (typeof item === 'object' && item !== null) {
+            count += countElementsInResult(item);
+          }
+        }
+      } else if (typeof result === 'object' && result !== null) {
+        // Si es un objeto con propiedades
+        for (const [key, value] of Object.entries(result)) {
+          if (Array.isArray(value)) {
+            count += value.length;
+          }
+          if (typeof value === 'object' && value !== null) {
+            count += countElementsInResult(value);
+          }
+        }
+      }
+      
+      return count;
+    }
+
+    // Scraping directo con spinner
+    runScrapeBtn.addEventListener("click", async () => {
+      if (isScraping) return; // Evitar múltiples clicks
+      
+      isScraping = true;
+      try {
+        // Toggle the spinner
+        scrapeSpinner.style.display = "inline-block";
+        scrapeText.textContent = "Working...";
+        stopScrapeBtn.style.display = "inline-block";
+        showNotification("Enviando job de scraping...");
+        setStatus("Working…");
+
+        addLog("🚀", "Iniciando scraping", `URL objetivo: ${targetUrlInput.value}`, "info");
+        addLog("📋", "Tipos de contenido", `Seleccionados: ${selectedContentTypes.join(', ')}`, "info");
+
+        const url = targetUrlInput.value.trim();
+        if (!url) {
+          addLog("❌", "URL vacía", "No se proporcionó URL para scraping", "error");
+          showNotification("La URL objetivo no puede estar vacía", true);
+          setStatus("Error");
+          return;
+        }
+
+        const elements = buildElementsFromSelection();
+        const jobOptions = buildJobOptions();
+        const depth = deepDepthSelect.value;
+        const hint = deepHintInput.value.trim();
+
+        const jobBody = {
+          url,
+          elements,
+          job_options: jobOptions,
+          prompt: `Profundidad deseada: ${depth}. Tipos de contenido: ${selectedContentTypes.join(', ')}. Hint: ${hint || "sin hint"}`,
+        };
+
+        addLog("📤", "Enviando job", "Petición enviada a la API", "info");
+        const submit = await callApi("/api/submit-scrape-job", "POST", jobBody);
+        jobResponseEl.textContent = JSON.stringify(submit.data, null, 2);
+
+        if (!submit.data || !submit.data.id) {
+          addLog("❌", "Job sin ID", "La API no devolvió un ID de job", "error");
+          showNotification("Job enviado, pero sin ID en la respuesta.", true);
+          setStatus("Error");
+          return;
+        }
+
+        const jobId = submit.data.id;
+        currentJobIds = [jobId]; // Track this job
+        
+        addLog("✅", "Job enviado", `ID: ${jobId}`, "success");
+        jobMetaEl.textContent = `Job enviado. ID: ${jobId}. Esperando resultado...`;
+        
+        // Crear elemento de progreso para este job
+        createJobProgressElement(jobId, url);
+        
+        showNotification(`Job ${jobId} enviado; consultando estado...`);
+
+        const jobData = await waitForJobCompletion(jobId);
+        const maxItems = maxItemsInput.value || "10";
+
+        const preview = sliceResultForPreview(jobData?.result || jobData?.Result || jobData, maxItems);
+        
+        // Contar elementos encontrados
+        elementCount = countElementsInResult(jobData?.result || jobData?.Result || jobData);
+        addLog("📊", "Elementos encontrados", `Total: ${elementCount} elementos`, "success");
+        
+        resultPreviewEl.textContent = JSON.stringify(preview, null, 2);
+
+        lastRawResults = jobData;
+        lastPreviewData = preview;
+
+        showNotification(`Job completado. ${elementCount} elementos encontrados. Mira la vista previa y, si quieres, exporta el ZIP.`);
+        
+        // Actualizar el progreso a 100% y completado
+        updateJobProgress(jobId, 100, 'Completado');
+
+        // Reset the spinner
+        scrapeSpinner.style.display = "none";
+        scrapeText.textContent = "Run Scraping";
+        stopScrapeBtn.style.display = "none";
+      } catch (e) {
+        addLog("❌", "Error en scraping", e.message, "error");
+        showNotification(e.message, true);
+        setStatus("Error");
+        // Reset the spinner
+        scrapeSpinner.style.display = "none";
+        scrapeText.textContent = "Run Scraping";
+        stopScrapeBtn.style.display = "none";
+      } finally {
+        isScraping = false;
+      }
+    });
+
+    // Botón para detener scraping
+    stopScrapeBtn.addEventListener("click", () => {
+      isScraping = false;
+      scrapeSpinner.style.display = "none";
+      scrapeText.textContent = "Run Scraping";
+      stopScrapeBtn.style.display = "none";
+      setStatus("Detenido");
+      showNotification("Job de scraping detenido.");
+      addLog("⏹️", "Scraping detenido", "Job detenido por el usuario", "info");
+    });
+
+    // Búsqueda OSINT multi-servicio
+    runUniversalSearchBtn.addEventListener("click", async () => {
+      if (isScraping) return; // Evitar múltiples clicks
+      
+      isScraping = true;
+      try {
+        universalSpinner.style.display = "inline-block";
+        universalText.textContent = "Buscando...";
+        stopUniversalSearchBtn.style.display = "inline-block";
+        showNotification("Generando y enviando jobs OSINT...");
+        setStatus("OSINT…");
+        addLog("🔍", "Iniciando OSINT", `Búsqueda para: ${universalQueryInput.value}`, "info");
+        addLog("🔄", "Plataformas seleccionadas", `${selectedPlatforms.join(', ')}`, "info");
+        addLog("📊", "Contador de elementos", "Seguimiento en tiempo real de elementos encontrados", "info");
+
+        if (selectedPlatforms.length === 0) {
+          addLog("❌", "No hay plataformas", "Selecciona al menos una plataforma", "error");
+          showNotification("Seleccioná al menos una plataforma.", true);
+          setStatus("Error");
+          return;
+        }
+
+        const query = universalQueryInput.value.trim();
+        if (!query) {
+          addLog("❌", "Consulta vacía", "No se proporcionó consulta", "error");
+          showNotification("La query no puede estar vacía", true);
+          setStatus("Error");
+          return;
+        }
+
+        const UNIVERSAL_SEARCH_URLS = {
+          google: (q) => `https://www.google.com/search?q=${encodeURIComponent(q)}`,
+          twitter: (q) => `https://twitter.com/search?q=${encodeURIComponent(q)}`,
+          facebook: (q) => `https://www.facebook.com/search/top/?q=${encodeURIComponent(q)}`,
+          linkedin: (q) => `https://www.linkedin.com/search/results/all/?keywords=${encodeURIComponent(q)}`,
+          github: (q) => `https://github.com/search?q=${encodeURIComponent(q)}`,
+          instagram: (q) => `https://www.instagram.com/explore/tags/${encodeURIComponent(q.replace(/\s+/g, ''))}/`,
+          youtube: (q) => `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`,
+          reddit: (q) => `https://www.reddit.com/search/?q=${encodeURIComponent(q)}`
+        };
+
+        const jobs = [];
+        for (const platform of selectedPlatforms) {
+          if (UNIVERSAL_SEARCH_URLS[platform]) {
+            const url = UNIVERSAL_SEARCH_URLS[platform](query);
+            addLog("📤", "Enviando job", `${platform}: ${url}`, "info");
+
+            const job = {
+              url,
+              elements: [
+                { name: "Links", xpath: "//a/@href", url: null },
+                { name: "Titles", xpath: "//title", url: null },
+                { name: "Text", xpath: "//body//text()", url: null },
+              ],
+              job_options: {
+                multi_page_scrape: false,
+                collect_media: false,
+                custom_headers: {},
+                proxies: [],
+                custom_cookies: [],
+                site_map: null,
+                return_html: false,
+              },
+              prompt: `OSINT para query="${query}" en plataforma=${platform}`,
+            };
+
+            const response = await callApi("/api/submit-scrape-job", "POST", job);
+            if (response.data.id) {
+              jobs.push({ platform, jobId: response.data.id, url });
+              addLog("✅", "Job creado", `${platform} (ID: ${response.data.id})`, "success");
+              
+              // Crear elemento de progreso para este job
+              createJobProgressElement(response.data.id, url);
+            }
+          }
+        }
+
+        currentJobIds = jobs.map(job => job.jobId); // Track all jobs
+        
+        const results = {};
+        let totalElements = 0;
+        
+        for (const job of jobs) {
+          addLog("⏳", "Esperando job", `Plataforma: ${job.platform}`, "info");
+          
+          try {
+            const data = await waitForJobCompletion(job.jobId);
+            results[job.platform] = data.result || data;
+            
+            // Contar elementos encontrados para este job específico
+            const platformElements = countElementsInResult(data.result || data);
+            totalElements += platformElements;
+            
+            updateJobProgress(job.jobId, 100, `Completado - ${platformElements} elem.`);
+            
+            addLog("📊", `Elementos ${job.platform}`, `${platformElements} elementos encontrados`, "success");
+          } catch (error) {
+            addLog("❌", `Error en job ${job.platform}`, error.message, "error");
+            results[job.platform] = { error: error.message };
+            updateJobProgress(job.jobId, 100, `Error - ${error.message.substring(0, 20)}...`);
+          }
+        }
+
+        // Preview para resultados OSINT
+        const preview = {};
+        const maxItems = maxItemsInput.value || "10";
+        for (const [platform, data] of Object.entries(results)) {
+          if (data.error) {
+            preview[platform] = { error: data.error };
+            continue;
+          }
+          
+          const result = Array.isArray(data) ? data : (data?.result || data);
+          const links = extractFromResult(result, "Links");
+          const titles = extractFromResult(result, "Titles");
+          const text = extractFromResult(result, "Text");
+
+          preview[platform] = {
+            title: titles?.[0] || "",
+            first_links: (links || []).slice(0, maxItems),
+            first_text: (text || []).slice(0, maxItems),
+          };
+        }
+
+        jobMetaEl.textContent = `Resultados OSINT multi-plataforma (${totalElements} elementos totales).`;
+        jobResponseEl.textContent = JSON.stringify(results, null, 2);
+        resultPreviewEl.textContent = JSON.stringify(preview, null, 2);
+
+        lastRawResults = results;
+        lastPreviewData = preview;
+
+        showNotification(`Búsqueda OSINT completada. ${totalElements} elementos encontrados en total.`);
+        
+        // Actualizar el estado general
+        setStatus("OSINT Completed");
+
+        universalSpinner.style.display = "none";
+        universalText.textContent = "Buscar en múltiples servicios";
+        stopUniversalSearchBtn.style.display = "none";
+      } catch (e) {
+        addLog("❌", "Error en OSINT", e.message, "error");
+        showNotification(e.message, true);
+        setStatus("Error");
+        universalSpinner.style.display = "none";
+        universalText.textContent = "Buscar en múltiples servicios";
+        stopUniversalSearchBtn.style.display = "none";
+      } finally {
+        isScraping = false;
+      }
+    });
+
+    // Botón para detener búsqueda OSINT
+    stopUniversalSearchBtn.addEventListener("click", () => {
+      isScraping = false;
+      universalSpinner.style.display = "none";
+      universalText.textContent = "Buscar en múltiples servicios";
+      stopUniversalSearchBtn.style.display = "none";
+      setStatus("Detenido");
+      showNotification("Búsqueda OSINT detenida.");
+      addLog("⏹️", "Búsqueda OSINT detenida", "Búsqueda detenida por el usuario", "info");
+    });
+
+    // Función para extraer datos de resultados
+    function extractFromResult(result, fieldName) {
+      if (!result) return [];
+      if (Array.isArray(result)) {
+        // Si es un array de objetos como [{name, data}, ...]
+        const fieldObj = result.find(obj => obj.name === fieldName);
+        if (fieldObj && fieldObj.data) {
+          return Array.isArray(fieldObj.data) ? fieldObj.data : [fieldObj.data];
+        } else {
+          // Si es un array plano
+          return result;
+        }
+      } else if (result[fieldName]) {
+        return Array.isArray(result[fieldName]) ? result[fieldName] : [result[fieldName]];
+      } else if (result.Result && result.Result[fieldName]) {
+        return Array.isArray(result.Result[fieldName]) ? result.Result[fieldName] : [result.Result[fieldName]];
+      }
+      return [];
+    }
+
+    // Recorte para vista previa
+    function sliceResultForPreview(data, maxItems) {
+      if (!data) return data;
+
+      if (Array.isArray(data)) {
+        // Si es un array de objetos como [{name, data}, ...]
+        return data.map(obj => {
+          if (obj.name && obj.data && Array.isArray(obj.data)) {
+            return {
+              name: obj.name,
+              data: obj.data.slice(0, maxItems)
+            };
+          }
+          return obj;
+        });
+      } else if (typeof data === "object") {
+        // Si es un objeto con múltiples campos
+        const result = {};
+        for (const [key, value] of Object.entries(data)) {
+          if (Array.isArray(value)) {
+            result[key] = value.slice(0, maxItems);
+          } else {
+            result[key] = value;
+          }
+        }
+        return result;
+      }
+      return data;
+    }
+
+    // Búsqueda inversa por imagen
+    async function runImageSearch(shouldScrape = true) {
+      if (isScraping) return; // Evitar múltiples clicks
+      
+      isScraping = true;
+      try {
+        imageSpinner.style.display = "inline-block";
+        imageText.textContent = "Buscando...";
+        stopImageSearchBtn.style.display = "inline-block";
+
+        const imgUrl = imageUrlInput.value.trim();
+        if (!imgUrl) {
+          addLog("❌", "Imagen vacía", "No se proporcionó URL de imagen", "error");
+          showNotification("La URL de la imagen no puede estar vacía", true);
+          return;
+        }
+
+        addLog("🖼️", "Búsqueda de imagen", `Imagen: ${imgUrl}`, "info");
+
+        if (!shouldScrape) {
+          // Sólo abrir pestañas
+          if (selectedImageServices.length === 0) {
+            selectedImageServices = ["google", "yandex", "bing"]; // Default
+            addLog("🔄", "Servicios por defecto", "Usando Google, Yandex y Bing", "info");
+          }
+
+          const IMAGE_SEARCH_URLS = {
+            google: (img) => `https://lens.google.com/uploadbyurl?url=${encodeURIComponent(img)}`,
+            yandex: (img) => `https://yandex.com/images/search?url=${encodeURIComponent(img)}&rpt=imageview`,
+            bing: (img) => `https://www.bing.com/images/search?view=detailv2&iss=sbi&q=imgurl:${encodeURIComponent(img)}`
+          };
+
+          for (const service of selectedImageServices) {
+            if (IMAGE_SEARCH_URLS[service]) {
+              window.open(IMAGE_SEARCH_URLS[service](imgUrl), '_blank');
+              addLog("🌐", "Pestaña abierta", `Servicio: ${service}`, "info");
+            }
+          }
+          showNotification("Abrí pestañas con los buscadores de imágenes.");
+          imageSpinner.style.display = "none";
+          imageText.textContent = "Buscar por imagen (scraping)";
+          stopImageSearchBtn.style.display = "none";
+          return;
+        }
+
+        // Scraping
+        showNotification("Enviando jobs de búsqueda inversa...");
+        setStatus("Img OSINT…");
+        addLog("🔍", "Búsqueda inversa", `Imagen a buscar: ${imgUrl}`, "info");
+
+        if (selectedImageServices.length === 0) {
+          selectedImageServices = ["google", "yandex", "bing"]; // Default
+          addLog("🔄", "Servicios por defecto", "Usando Google, Yandex y Bing", "info");
+        }
+
+        const IMAGE_SEARCH_URLS = {
+          google: (img) => `https://lens.google.com/uploadbyurl?url=${encodeURIComponent(img)}`,
+          yandex: (img) => `https://yandex.com/images/search?url=${encodeURIComponent(img)}&rpt=imageview`,
+          bing: (img) => `https://www.bing.com/images/search?view=detailv2&iss=sbi&q=imgurl:${encodeURIComponent(img)}`
+        };
+
+        const jobs = [];
+        for (const t of selectedImageServices) {
+          const url = IMAGE_SEARCH_URLS[t](imgUrl);
+          addLog("📤", "Enviando job imagen", `${t}: ${url}`, "info");
+
+          const job = {
+            url,
+            elements: [
+              { name: "Links", xpath: "//a/@href", url: null },
+              { name: "Titles", xpath: "//title", url: null },
+              { name: "Text", xpath: "//body//text()", url: null },
+            ],
+            job_options: {
+              multi_page_scrape: false,
+              collect_media: false,
+              custom_headers: {},
+              proxies: [],
+              custom_cookies: [],
+              site_map: null,
+              return_html: false,
+            },
+            prompt: `OSINT por imagen URL=${imgUrl} en servicio=${t}`,
+          };
+          const resp = await callApi("/api/submit-scrape-job", "POST", job);
+          if (resp.data.id) {
+            jobs.push({ service: t, jobId: resp.data.id, url });
+            addLog("✅", "Job imagen creado", `${t} (ID: ${resp.data.id})`, "success");
+            
+            // Crear elemento de progreso para este job
+            createJobProgressElement(resp.data.id, url);
+          }
+        }
+
+        currentJobIds = jobs.map(job => job.jobId); // Track all jobs
+        
+        const results = {};
+        let totalElements = 0;
+        
+        for (const job of jobs) {
+          addLog("⏳", "Esperando job imagen", `Servicio: ${job.service}`, "info");
+          
+          try {
+            const data = await waitForJobCompletion(job.jobId);
+            results[job.service] = data.result || data;
+            
+            // Contar elementos encontrados para este job específico
+            const serviceElements = countElementsInResult(data.result || data);
+            totalElements += serviceElements;
+            
+            updateJobProgress(job.jobId, 100, `Completado - ${serviceElements} elem.`);
+            
+            addLog("📊", `Elementos ${job.service}`, `${serviceElements} elementos encontrados`, "success");
+          } catch (error) {
+            addLog("❌", `Error en job imagen ${job.service}`, error.message, "error");
+            results[job.service] = { error: error.message };
+            updateJobProgress(job.jobId, 100, `Error - ${error.message.substring(0, 20)}...`);
+          }
+        }
+
+        const preview = {};
+        const maxItems = maxItemsInput.value || "10";
+        for (const [service, data] of Object.entries(results)) {
+          if (data.error) {
+            preview[service] = { error: data.error };
+            continue;
+          }
+          
+          const result = Array.isArray(data) ? data : (data?.result || data);
+          const links = extractFromResult(result, "Links");
+          const titles = extractFromResult(result, "Titles");
+
+          preview[service] = {
+            title: titles?.[0] || "",
+            first_links: (links || []).slice(0, maxItems),
+          };
+        }
+
+        jobMetaEl.textContent = `Resultados de búsqueda inversa por imagen (${totalElements} elementos totales).`;
+        jobResponseEl.textContent = JSON.stringify(results, null, 2);
+        resultPreviewEl.textContent = JSON.stringify(preview, null, 2);
+
+        lastRawResults = results;
+        lastPreviewData = preview;
+
+        showNotification(`Búsqueda inversa completada. ${totalElements} elementos encontrados en total.`);
+        
+        // Actualizar el estado general
+        setStatus("Img OSINT Completed");
+
+        imageSpinner.style.display = "none";
+        imageText.textContent = "Buscar por imagen (scraping)";
+        stopImageSearchBtn.style.display = "none";
+      } catch (e) {
+        addLog("❌", "Error en búsqueda imagen", e.message, "error");
+        showNotification(e.message, true);
+        setStatus("Error");
+        imageSpinner.style.display = "none";
+        imageText.textContent = "Buscar por imagen (scraping)";
+        stopImageSearchBtn.style.display = "none";
+      } finally {
+        isScraping = false;
+      }
+    }
+
+    // Botón para detener búsqueda de imagen
+    stopImageSearchBtn.addEventListener("click", () => {
+      isScraping = false;
+      imageSpinner.style.display = "none";
+      imageText.textContent = "Buscar por imagen (scraping)";
+      stopImageSearchBtn.style.display = "none";
+      setStatus("Detenido");
+      showNotification("Búsqueda de imagen detenida.");
+      addLog("⏹️", "Búsqueda imagen detenida", "Búsqueda detenida por el usuario", "info");
+    });
+
+    runImageSearchBtn.addEventListener("click", () => runImageSearch(true));
+    openImageTabsBtn.addEventListener("click", () => runImageSearch(false));
+
+    // Jobs recientes
+    listJobsBtn.addEventListener("click", async () => {
+      try {
+        jobsSpinner.style.display = "inline-block";
+        jobsText.textContent = "Cargando...";
+        addLog("📋", "Recuperando jobs", "Solicitando lista de jobs recientes", "info");
+
+        const { data } = await callApi("/api/retrieve-scrape-jobs", "POST", { chat: null });
+        jobMetaEl.textContent = "Jobs recientes (respuesta cruda de la API):";
+        jobResponseEl.textContent = JSON.stringify(data, null, 2);
+        showNotification("Jobs recuperados.");
+
+        // Actualizar lista de jobs
+        updateJobsList(data);
+
+        // Añadir logs para cada job recuperado
+        if (data && Array.isArray(data) && data.length > 0) {
+          addLog("✅", "Jobs recuperados", `${data.length} jobs encontrados`, "success");
+          data.slice(0, 3).forEach(job => {
+            addLog("📋", "Job encontrado", `${job.id || job.JobId || job.job_id} - ${job.status || job.Status}`, "info");
+          });
+        } else {
+          addLog("⚠️", "No hay jobs", "No se encontraron jobs recientes", "warning");
+        }
+
+        jobsSpinner.style.display = "none";
+        jobsText.textContent = "Ver jobs recientes";
+      } catch (e) {
+        addLog("❌", "Error al recuperar jobs", e.message, "error");
+        showNotification(e.message, true);
+        jobsSpinner.style.display = "none";
+        jobsText.textContent = "Ver jobs recientes";
+      }
+    });
+
+    // Función para actualizar la lista de jobs
+    function updateJobsList(jobs) {
+      if (!jobs || !Array.isArray(jobs) || jobs.length === 0) {
+        jobsList.innerHTML = '<div style="text-align: center; color: var(--muted); padding: 20px;">No hay trabajos recientes</div>';
+        return;
+      }
+
+      jobsList.innerHTML = '';
+      jobs.forEach(job => {
+        const jobItem = document.createElement('div');
+        jobItem.className = 'job-item';
+
+        const jobId = job.id || job.JobId || job.job_id || 'N/A';
+        const jobStatus = job.status || job.Status || job.state || 'Unknown';
+        const jobUrl = job.url || 'N/A';
+
+        jobItem.innerHTML = `
+          <div class="job-item-header">
+            <div class="job-item-title">Job: ${jobId.substring(0, 8)}...</div>
+            <div class="job-item-status" style="background: ${jobStatus.toLowerCase() === 'completed' ? 'rgba(34,197,94,.15); color: #22c55e;' : jobStatus.toLowerCase() === 'failed' ? 'rgba(249,115,22,.15); color: #f97316;' : 'rgba(56,189,248,.15); color: #38bdf8;'}">
+              ${jobStatus}
+            </div>
+          </div>
+          <div class="job-item-content">
+            <div>URL: ${jobUrl}</div>
+            <div>Fecha: ${(job.time_created || job.createdAt || new Date()).toString().substring(0, 24)}</div>
+            <div>Elementos: ${countElementsInResult(job.result || [])}</div>
+          </div>
+        `;
+
+        jobsList.appendChild(jobItem);
+      });
+    }
+
+    // Abrir docs
+    openDocsBtn.addEventListener("click", () => {
+      const url = localStorage.getItem("scraperr_api_url") || apiUrlInput.value.trim();
+      if (url) {
+        window.open(url + "/docs", "_blank");
+        addLog("📖", "Documentación abierta", "API docs en nueva pestaña", "info");
+      } else {
+        showNotification("Configura la API Base URL primero", true);
+        addLog("❌", "URL API no configurada", "Configura la API Base URL primero", "error");
+      }
+    });
+
+    // Exportar ZIP
+    exportZipBtn.addEventListener("click", async () => {
+      if (!lastRawResults) {
+        showNotification("No hay resultados para exportar", true);
+        addLog("❌", "No hay resultados", "No hay resultados para exportar", "error");
+        return;
+      }
+
+      try {
+        addLog("📦", "Exportando resultados", "Creando archivo ZIP", "info");
+        const zip = new JSZip();
+        zip.file("results.json", JSON.stringify(lastRawResults, null, 2));
+        zip.file("preview.json", JSON.stringify(lastPreviewData, null, 2));
+
+        const content = await zip.generateAsync({ type: "blob" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(content);
+        a.download = "scraperr_results.zip";
+        a.click();
+
+        showNotification("Archivo ZIP descargado");
+        addLog("✅", "ZIP exportado", "Archivo ZIP descargado correctamente", "success");
+      } catch (e) {
+        addLog("❌", "Error al exportar ZIP", e.message, "error");
+        showNotification("Error al generar el ZIP: " + e.message, true);
+      }
+    });
+
+    // Limpiar resultados
+    clearResultsBtn.addEventListener("click", () => {
+      jobResponseEl.textContent = "Esperando que envíes un scraping o búsqueda OSINT.";
+      resultPreviewEl.textContent = "Cuando el job termine, verás acá un resumen estructurado.";
+      jobMetaEl.textContent = "Todavía no se envió ningún job.";
+      lastRawResults = null;
+      lastPreviewData = null;
+      showNotification("Resultados limpiados");
+      addLog("🧹", "Resultados limpiados", "Áreas de respuesta y vista previa limpiadas", "info");
+    });
+
+    // AI API Key Functions
+    saveApiKeysBtn.addEventListener("click", () => {
+      if (geminiKeyInput.value) {
+        localStorage.setItem("gemini_api_key", geminiKeyInput.value);
+        addLog("🤖", "API Key Gemini guardada", "Clave API de Gemini almacenada", "success");
+        showNotification("Gemini API key saved");
+      }
+      if (openaiKeyInput.value) {
+        localStorage.setItem("openai_api_key", openaiKeyInput.value);
+        addLog("🤖", "API Key OpenAI guardada", "Clave API de OpenAI almacenada", "success");
+        showNotification("OpenAI API key saved");
+      }
+    });
+
+    toggleConfigBtn.addEventListener("click", () => {
+      configSection.style.display = configSection.style.display === "block" ? "none" : "block";
+      const action = configSection.style.display === "block" ? "abierta" : "cerrada";
+      addLog("⚙️", "Configuración avanzada", `Sección de configuración ${action}`, "info");
+    });
+  </script>
+</body>
+</html>

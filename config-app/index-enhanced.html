@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scraperr - Configuración Completa</title>
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --success-color: #4cc9f0;
+            --warning-color: #f72585;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+            --gray-color: #6c757d;
+            --border-color: #dee2e6;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: var(--dark-color);
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            display: flex;
+            flex-wrap: wrap;
+            min-height: 500px;
+        }
+        
+        .config-panel {
+            flex: 1;
+            min-width: 300px;
+            padding: 25px;
+            background-color: #f8f9fa;
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+            max-height: 70vh;
+        }
+        
+        .preview-panel {
+            flex: 2;
+            min-width: 400px;
+            padding: 25px;
+        }
+        
+        .config-section {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .config-section:last-child {
+            border-bottom: none;
+        }
+        
+        h2 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        h2 i {
+            margin-right: 10px;
+        }
+        
+        .btn {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin: 5px 5px 5px 0;
+            transition: background-color 0.3s;
+            width: auto;
+        }
+        
+        .btn:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        .btn-save {
+            background-color: var(--success-color);
+            color: #000;
+        }
+        
+        .btn-save:hover {
+            background-color: #3ab4d9;
+        }
+        
+        .btn-reset {
+            background-color: var(--warning-color);
+        }
+        
+        .btn-reset:hover {
+            background-color: #e11571;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: var(--dark-color);
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        textarea {
+            min-height: 100px;
+            font-family: monospace;
+            resize: vertical;
+        }
+        
+        .env-preview {
+            background-color: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            overflow-x: auto;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+        
+        .tab {
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            background-color: #f1f1f1;
+            border-radius: 5px 5px 0 0;
+            margin-bottom: -1px;
+        }
+        
+        .tab button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            transition: 0.3s;
+            font-size: 1rem;
+        }
+        
+        .tab button:hover {
+            background-color: #ddd;
+        }
+        
+        .tab button.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .tabcontent {
+            display: none;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+            background-color: white;
+        }
+        
+        .tabcontent.active {
+            display: block;
+        }
+        
+        .notification {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+            display: none;
+        }
+        
+        .notification.success {
+            background-color: #d4edda;
+            color: #155724;
+            display: block;
+        }
+        
+        .notification.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+        
+        .collapsible {
+            background-color: #eee;
+            color: #444;
+            cursor: pointer;
+            padding: 10px;
+            width: 100%;
+            border: none;
+            text-align: left;
+            outline: none;
+            font-size: 1rem;
+            border-radius: 4px;
+            margin-bottom: 5px;
+        }
+        
+        .collapsible:hover {
+            background-color: #ddd;
+        }
+        
+        .content {
+            padding: 0 18px;
+            display: none;
+            overflow: hidden;
+        }
+        
+        .active-content {
+            display: block !important;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            background-color: #f8f9fa;
+            color: var(--gray-color);
+            border-top: 1px solid var(--border-color);
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .config-panel {
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔧 Scraperr - Configuración Completa</h1>
+            <p class="subtitle">Gestor de configuración para todas las variables de Scraperr</p>
+        </header>
+        
+        <div class="main-content">
+            <div class="config-panel">
+                <div class="notification" id="notification"></div>
+                
+                <div class="tab">
+                    <button class="tablinks active" data-tab="general">General</button>
+                    <button class="tablinks" data-tab="api">API Keys</button>
+                    <button class="tablinks" data-tab="db">Base de Datos</button>
+                    <button class="tablinks" data-tab="advanced">Avanzado</button>
+                </div>
+
+                <div id="general" class="tabcontent active">
+                    <div class="config-section">
+                        <h2><i>🔑</i> Configuración Básica</h2>
+                        
+                        <div class="form-group">
+                            <label for="secretKey">SECRET_KEY:</label>
+                            <input type="password" id="secretKey" placeholder="Clave secreta de 32+ caracteres">
+                            <button type="button" class="btn" onclick="generateSecretKey()">Generar Clave</button>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="logLevel">LOG_LEVEL:</label>
+                            <select id="logLevel">
+                                <option value="DEBUG">DEBUG</option>
+                                <option value="INFO" selected>INFO</option>
+                                <option value="WARNING">WARNING</option>
+                                <option value="ERROR">ERROR</option>
+                                <option value="CRITICAL">CRITICAL</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="algorithm">ALGORITHM:</label>
+                            <input type="text" id="algorithm" value="HS256">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="tokenExpiry">ACCESS_TOKEN_EXPIRE_MINUTES:</label>
+                            <input type="number" id="tokenExpiry" value="600" min="1">
+                        </div>
+                    </div>
+                    
+                    <div class="config-section">
+                        <h2><i>🌐</i> URLs y Servicios</h2>
+                        
+                        <div class="form-group">
+                            <label for="apiUrl">NEXT_PUBLIC_API_URL:</label>
+                            <input type="text" id="apiUrl" value="http://scraperr_api:8000">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="serverUrl">SERVER_URL:</label>
+                            <input type="text" id="serverUrl" value="http://scraperr_api:8000">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="frontendUrl">FRONTEND_URL:</label>
+                            <input type="text" id="frontendUrl" value="http://localhost">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="api" class="tabcontent">
+                    <div class="config-section">
+                        <h2><i>🤖</i> API Keys</h2>
+                        
+                        <div class="form-group">
+                            <label for="openaiKey">OPENAI_API_KEY:</label>
+                            <input type="password" id="openaiKey" placeholder="sk-...">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="geminiKey">GEMINI_API_KEY:</label>
+                            <input type="password" id="geminiKey" placeholder="AIza...">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="grokKey">GROK_API_KEY:</label>
+                            <input type="password" id="grokKey" placeholder="xai-...">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="anthropicKey">ANTHROPIC_API_KEY:</label>
+                            <input type="password" id="anthropicKey" placeholder="sk-ant-...">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="openrouterKey">OPENROUTER_API_KEY:</label>
+                            <input type="password" id="openrouterKey" placeholder="sk-or-...">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="huggingfaceKey">HUGGINGFACE_API_KEY:</label>
+                            <input type="password" id="huggingfaceKey" placeholder="hf_...">
+                        </div>
+                    </div>
+                    
+                    <div class="config-section">
+                        <h2><i>☁️</i> Servicios en la Nube</h2>
+                        
+                        <div class="form-group">
+                            <label for="awsAccessKeyId">AWS_ACCESS_KEY_ID:</label>
+                            <input type="text" id="awsAccessKeyId" placeholder="AKIA...">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="awsSecretAccessKey">AWS_SECRET_ACCESS_KEY:</label>
+                            <input type="password" id="awsSecretAccessKey" placeholder="...">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="googleCloudKey">GOOGLE_CLOUD_KEY:</label>
+                            <input type="password" id="googleCloudKey" placeholder="...">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="azureKey">AZURE_OPENAI_API_KEY:</label>
+                            <input type="password" id="azureKey" placeholder="...">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="db" class="tabcontent">
+                    <div class="config-section">
+                        <h2><i>🗄️</i> Configuración de Base de Datos</h2>
+                        
+                        <div class="form-group">
+                            <label for="dbType">DB_TYPE:</label>
+                            <select id="dbType">
+                                <option value="postgresdb">PostgreSQL</option>
+                                <option value="mysql">MySQL</option>
+                                <option value="sqlite">SQLite</option>
+                                <option value="mongodb">MongoDB</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="dbHost">DB_POSTGRESDB_HOST:</label>
+                            <input type="text" id="dbHost" placeholder="ej: localhost o nombre del host">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="dbPort">DB_POSTGRESDB_PORT:</label>
+                            <input type="number" id="dbPort" value="5432">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="dbUser">DB_POSTGRESDB_USER:</label>
+                            <input type="text" id="dbUser" placeholder="nombre de usuario">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="dbPassword">DB_POSTGRESDB_PASSWORD:</label>
+                            <input type="password" id="dbPassword" placeholder="contraseña">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="dbName">DB_POSTGRESDB_NAME:</label>
+                            <input type="text" id="dbName" value="scraperr">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="dbUrl">DATABASE_URL (opcional):</label>
+                            <input type="text" id="dbUrl" placeholder="cadena de conexión completa">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="advanced" class="tabcontent">
+                    <div class="config-section">
+                        <h2><i>⚙️</i> Configuración Avanzada</h2>
+                        
+                        <div class="form-group">
+                            <label for="maxWorkers">MAX_WORKERS:</label>
+                            <input type="number" id="maxWorkers" value="4" min="1">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="timeout">REQUEST_TIMEOUT (segundos):</label>
+                            <input type="number" id="timeout" value="30" min="1">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="retryAttempts">RETRY_ATTEMPTS:</label>
+                            <input type="number" id="retryAttempts" value="3" min="0">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="concurrentRequests">CONCURRENT_REQUESTS:</label>
+                            <input type="number" id="concurrentRequests" value="5" min="1">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="rateLimit">RATE_LIMIT (requests/min):</label>
+                            <input type="number" id="rateLimit" value="60" min="1">
+                        </div>
+                    </div>
+                    
+                    <div class="config-section">
+                        <h2><i>🔒</i> Seguridad y Autenticación</h2>
+                        
+                        <div class="form-group">
+                            <label for="jwtSecret">JWT_SECRET:</label>
+                            <input type="password" id="jwtSecret" placeholder="Clave secreta JWT">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="sessionSecret">SESSION_SECRET:</label>
+                            <input type="password" id="sessionSecret" placeholder="Clave secreta de sesión">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="encryptionKey">ENCRYPTION_KEY:</label>
+                            <input type="password" id="encryptionKey" placeholder="Clave de encripción AES-256">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="recaptchaSiteKey">RECAPTCHA_SITE_KEY:</label>
+                            <input type="text" id="recaptchaSiteKey" placeholder="Clave del sitio reCAPTCHA">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="recaptchaSecretKey">RECAPTCHA_SECRET_KEY:</label>
+                            <input type="password" id="recaptchaSecretKey" placeholder="Clave secreta reCAPTCHA">
+                        </div>
+                    </div>
+                    
+                    <div class="config-section">
+                        <h2><i>💾</i> Almacenamiento</h2>
+                        
+                        <div class="form-group">
+                            <label for="storageType">STORAGE_TYPE:</label>
+                            <select id="storageType">
+                                <option value="local">Local</option>
+                                <option value="s3">Amazon S3</option>
+                                <option value="gcs">Google Cloud Storage</option>
+                                <option value="azure">Azure Blob Storage</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="maxFileSize">MAX_FILE_SIZE (MB):</label>
+                            <input type="number" id="maxFileSize" value="100" min="1">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="allowedFileTypes">ALLOWED_FILE_TYPES:</label>
+                            <input type="text" id="allowedFileTypes" value="jpg,jpeg,png,pdf,doc,docx,txt,zip" placeholder="extensiones separadas por comas">
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px; text-align: center;">
+                    <button class="btn btn-save" onclick="saveConfiguration()">💾 Guardar Configuración</button>
+                    <button class="btn btn-reset" onclick="resetForm()">🔄 Reiniciar Formulario</button>
+                    <button class="btn" onclick="downloadEnvFile()">📥 Descargar .env</button>
+                </div>
+            </div>
+            
+            <div class="preview-panel">
+                <h2>📋 Vista Previa del Archivo .env</h2>
+                <div id="envPreview" class="env-preview"># Vista previa de la configuración generada\n# Los valores reales aparecerán aquí después de ingresarlos\n\n# Configuración Básica\nSECRET_KEY=\nLOG_LEVEL=INFO\nALGORITHM=HS256\nACCESS_TOKEN_EXPIRE_MINUTES=600\n\n# URLs\nNEXT_PUBLIC_API_URL=http://scraperr_api:8000\nSERVER_URL=http://scraperr_api:8000\nFRONTEND_URL=http://localhost\n\n# API Keys\nOPENAI_API_KEY=\nGEMINI_API_KEY=\nGROK_API_KEY=\n\n# Base de Datos\nDB_TYPE=postgresdb\nDB_POSTGRESDB_HOST=\nDB_POSTGRESDB_PORT=5432\nDB_POSTGRESDB_USER=\nDB_POSTGRESDB_PASSWORD=\nDB_POSTGRESDB_NAME=scraperr</div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Scraperr Configuration Manager &copy; 2025 | Gestión Completa de Variables de Entorno</p>
+        </footer>
+    </div>
+
+    <script>
+        // Generate a random 32-byte hex string for SECRET_KEY
+        function generateSecretKey() {
+            const array = new Uint8Array(32);
+            window.crypto.getRandomValues(array);
+            const secretKey = Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+            document.getElementById('secretKey').value = secretKey;
+            updatePreview();
+        }
+        
+        // Update the preview area with current configuration
+        function updatePreview() {
+            const config = {
+                // General settings
+                SECRET_KEY: document.getElementById('secretKey').value,
+                LOG_LEVEL: document.getElementById('logLevel').value,
+                ALGORITHM: document.getElementById('algorithm').value,
+                ACCESS_TOKEN_EXPIRE_MINUTES: document.getElementById('tokenExpiry').value,
+                
+                // URLs
+                NEXT_PUBLIC_API_URL: document.getElementById('apiUrl').value,
+                SERVER_URL: document.getElementById('serverUrl').value,
+                FRONTEND_URL: document.getElementById('frontendUrl').value,
+                
+                // API Keys
+                OPENAI_API_KEY: document.getElementById('openaiKey').value,
+                GEMINI_API_KEY: document.getElementById('geminiKey').value,
+                GROK_API_KEY: document.getElementById('grokKey').value,
+                ANTHROPIC_API_KEY: document.getElementById('anthropicKey').value,
+                OPENROUTER_API_KEY: document.getElementById('openrouterKey').value,
+                HUGGINGFACE_API_KEY: document.getElementById('huggingfaceKey').value,
+                
+                // AWS
+                AWS_ACCESS_KEY_ID: document.getElementById('awsAccessKeyId').value,
+                AWS_SECRET_ACCESS_KEY: document.getElementById('awsSecretAccessKey').value,
+                
+                // Google Cloud
+                GOOGLE_CLOUD_KEY: document.getElementById('googleCloudKey').value,
+                
+                // Azure
+                AZURE_OPENAI_API_KEY: document.getElementById('azureKey').value,
+                
+                // Database settings
+                DB_TYPE: document.getElementById('dbType').value,
+                DB_POSTGRESDB_HOST: document.getElementById('dbHost').value,
+                DB_POSTGRESDB_PORT: document.getElementById('dbPort').value,
+                DB_POSTGRESDB_USER: document.getElementById('dbUser').value,
+                DB_POSTGRESDB_PASSWORD: document.getElementById('dbPassword').value,
+                DB_POSTGRESDB_NAME: document.getElementById('dbName').value,
+                DATABASE_URL: document.getElementById('dbUrl').value,
+                
+                // Advanced settings
+                MAX_WORKERS: document.getElementById('maxWorkers').value,
+                REQUEST_TIMEOUT: document.getElementById('timeout').value,
+                RETRY_ATTEMPTS: document.getElementById('retryAttempts').value,
+                CONCURRENT_REQUESTS: document.getElementById('concurrentRequests').value,
+                RATE_LIMIT: document.getElementById('rateLimit').value,
+                
+                // Security
+                JWT_SECRET: document.getElementById('jwtSecret').value,
+                SESSION_SECRET: document.getElementById('sessionSecret').value,
+                ENCRYPTION_KEY: document.getElementById('encryptionKey').value,
+                RECAPTCHA_SITE_KEY: document.getElementById('recaptchaSiteKey').value,
+                RECAPTCHA_SECRET_KEY: document.getElementById('recaptchaSecretKey').value,
+                
+                // Storage
+                STORAGE_TYPE: document.getElementById('storageType').value,
+                MAX_FILE_SIZE: document.getElementById('maxFileSize').value,
+                ALLOWED_FILE_TYPES: document.getElementById('allowedFileTypes').value
+            };
+            
+            // Generate the .env content
+            let envContent = "# Configuración de Scraperr\n# Generado automáticamente\n\n";
+            
+            // Add each configuration with its value (empty if not set)
+            for (const [key, value] of Object.entries(config)) {
+                if (value !== undefined && value !== null) {
+                    envContent += `${key}=${value}\n`;
+                } else {
+                    envContent += `${key}=\n`;
+                }
+            }
+            
+            document.getElementById('envPreview').textContent = envContent;
+        }
+        
+        // Save configuration to localStorage
+        function saveConfiguration() {
+            const config = {
+                // General settings
+                SECRET_KEY: document.getElementById('secretKey').value,
+                LOG_LEVEL: document.getElementById('logLevel').value,
+                ALGORITHM: document.getElementById('algorithm').value,
+                ACCESS_TOKEN_EXPIRE_MINUTES: document.getElementById('tokenExpiry').value,
+                
+                // URLs
+                NEXT_PUBLIC_API_URL: document.getElementById('apiUrl').value,
+                SERVER_URL: document.getElementById('serverUrl').value,
+                FRONTEND_URL: document.getElementById('frontendUrl').value,
+                
+                // API Keys
+                OPENAI_API_KEY: document.getElementById('openaiKey').value,
+                GEMINI_API_KEY: document.getElementById('geminiKey').value,
+                GROK_API_KEY: document.getElementById('grokKey').value,
+                ANTHROPIC_API_KEY: document.getElementById('anthropicKey').value,
+                OPENROUTER_API_KEY: document.getElementById('openrouterKey').value,
+                HUGGINGFACE_API_KEY: document.getElementById('huggingfaceKey').value,
+                
+                // AWS
+                AWS_ACCESS_KEY_ID: document.getElementById('awsAccessKeyId').value,
+                AWS_SECRET_ACCESS_KEY: document.getElementById('awsSecretAccessKey').value,
+                
+                // Google Cloud
+                GOOGLE_CLOUD_KEY: document.getElementById('googleCloudKey').value,
+                
+                // Azure
+                AZURE_OPENAI_API_KEY: document.getElementById('azureKey').value,
+                
+                // Database settings
+                DB_TYPE: document.getElementById('dbType').value,
+                DB_POSTGRESDB_HOST: document.getElementById('dbHost').value,
+                DB_POSTGRESDB_PORT: document.getElementById('dbPort').value,
+                DB_POSTGRESDB_USER: document.getElementById('dbUser').value,
+                DB_POSTGRESDB_PASSWORD: document.getElementById('dbPassword').value,
+                DB_POSTGRESDB_NAME: document.getElementById('dbName').value,
+                DATABASE_URL: document.getElementById('dbUrl').value,
+                
+                // Advanced settings
+                MAX_WORKERS: document.getElementById('maxWorkers').value,
+                REQUEST_TIMEOUT: document.getElementById('timeout').value,
+                RETRY_ATTEMPTS: document.getElementById('retryAttempts').value,
+                CONCURRENT_REQUESTS: document.getElementById('concurrentRequests').value,
+                RATE_LIMIT: document.getElementById('rateLimit').value,
+                
+                // Security
+                JWT_SECRET: document.getElementById('jwtSecret').value,
+                SESSION_SECRET: document.getElementById('sessionSecret').value,
+                ENCRYPTION_KEY: document.getElementById('encryptionKey').value,
+                RECAPTCHA_SITE_KEY: document.getElementById('recaptchaSiteKey').value,
+                RECAPTCHA_SECRET_KEY: document.getElementById('recaptchaSecretKey').value,
+                
+                // Storage
+                STORAGE_TYPE: document.getElementById('storageType').value,
+                MAX_FILE_SIZE: document.getElementById('maxFileSize').value,
+                ALLOWED_FILE_TYPES: document.getElementById('allowedFileTypes').value
+            };
+            
+            localStorage.setItem('scraperr_config', JSON.stringify(config));
+            
+            showNotification('Configuración guardada correctamente en el navegador', false);
+        }
+        
+        // Download the .env file
+        function downloadEnvFile() {
+            const textarea = document.getElementById('envPreview');
+            const content = textarea.textContent;
+            
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = '.env';
+            document.body.appendChild(a);
+            a.click();
+            
+            setTimeout(() => {
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            }, 100);
+            
+            showNotification('Archivo .env descargado', false);
+        }
+        
+        // Reset the form to empty values
+        function resetForm() {
+            if (confirm('¿Estás seguro de que quieres reiniciar todos los campos?')) {
+                document.querySelectorAll('input, select, textarea').forEach(element => {
+                    if (element.type === 'password' || element.type === 'text' || element.tagName === 'TEXTAREA') {
+                        element.value = '';
+                    } else if (element.tagName === 'SELECT') {
+                        element.selectedIndex = 0;
+                    }
+                });
+                
+                // Set default values where appropriate
+                document.getElementById('logLevel').value = 'INFO';
+                document.getElementById('algorithm').value = 'HS256';
+                document.getElementById('tokenExpiry').value = '600';
+                document.getElementById('apiUrl').value = 'http://scraperr_api:8000';
+                document.getElementById('serverUrl').value = 'http://scraperr_api:8000';
+                document.getElementById('frontendUrl').value = 'http://localhost';
+                document.getElementById('dbType').value = 'postgresdb';
+                document.getElementById('dbPort').value = '5432';
+                document.getElementById('dbName').value = 'scraperr';
+                document.getElementById('maxWorkers').value = '4';
+                document.getElementById('timeout').value = '30';
+                document.getElementById('retryAttempts').value = '3';
+                document.getElementById('concurrentRequests').value = '5';
+                document.getElementById('rateLimit').value = '60';
+                document.getElementById('storageType').value = 'local';
+                document.getElementById('maxFileSize').value = '100';
+                document.getElementById('allowedFileTypes').value = 'jpg,jpeg,png,pdf,doc,docx,txt,zip';
+                
+                updatePreview();
+                showNotification('Formulario reiniciado', false);
+            }
+        }
+        
+        // Show notification
+        function showNotification(message, isError = false) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${isError ? 'error' : 'success'}`;
+            
+            setTimeout(() => {
+                notification.className = 'notification';
+            }, 5000);
+        }
+        
+        // Tab switching functionality
+        document.querySelectorAll('.tablinks').forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs and content
+                document.querySelectorAll('.tablinks').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tabcontent').forEach(c => c.classList.remove('active'));
+                
+                // Add active class to clicked tab and corresponding content
+                tab.classList.add('active');
+                const tabName = tab.getAttribute('data-tab');
+                document.getElementById(tabName).classList.add('active');
+            });
+        });
+        
+        // Update preview when any input changes
+        document.querySelectorAll('input, select, textarea').forEach(element => {
+            element.addEventListener('input', updatePreview);
+        });
+        
+        // Initialize with saved configuration if available
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedConfig = localStorage.getItem('scraperr_config');
+            if (savedConfig) {
+                try {
+                    const config = JSON.parse(savedConfig);
+                    
+                    // General settings
+                    document.getElementById('secretKey').value = config.SECRET_KEY || '';
+                    document.getElementById('logLevel').value = config.LOG_LEVEL || 'INFO';
+                    document.getElementById('algorithm').value = config.ALGORITHM || 'HS256';
+                    document.getElementById('tokenExpiry').value = config.ACCESS_TOKEN_EXPIRE_MINUTES || '600';
+                    
+                    // URLs
+                    document.getElementById('apiUrl').value = config.NEXT_PUBLIC_API_URL || 'http://scraperr_api:8000';
+                    document.getElementById('serverUrl').value = config.SERVER_URL || 'http://scraperr_api:8000';
+                    document.getElementById('frontendUrl').value = config.FRONTEND_URL || 'http://localhost';
+                    
+                    // API Keys
+                    document.getElementById('openaiKey').value = config.OPENAI_API_KEY || '';
+                    document.getElementById('geminiKey').value = config.GEMINI_API_KEY || '';
+                    document.getElementById('grokKey').value = config.GROK_API_KEY || '';
+                    document.getElementById('anthropicKey').value = config.ANTHROPIC_API_KEY || '';
+                    document.getElementById('openrouterKey').value = config.OPENROUTER_API_KEY || '';
+                    document.getElementById('huggingfaceKey').value = config.HUGGINGFACE_API_KEY || '';
+                    
+                    // AWS
+                    document.getElementById('awsAccessKeyId').value = config.AWS_ACCESS_KEY_ID || '';
+                    document.getElementById('awsSecretAccessKey').value = config.AWS_SECRET_ACCESS_KEY || '';
+                    
+                    // Google Cloud
+                    document.getElementById('googleCloudKey').value = config.GOOGLE_CLOUD_KEY || '';
+                    
+                    // Azure
+                    document.getElementById('azureKey').value = config.AZURE_OPENAI_API_KEY || '';
+                    
+                    // Database
+                    document.getElementById('dbType').value = config.DB_TYPE || 'postgresdb';
+                    document.getElementById('dbHost').value = config.DB_POSTGRESDB_HOST || '';
+                    document.getElementById('dbPort').value = config.DB_POSTGRESDB_PORT || '5432';
+                    document.getElementById('dbUser').value = config.DB_POSTGRESDB_USER || '';
+                    document.getElementById('dbPassword').value = config.DB_POSTGRESDB_PASSWORD || '';
+                    document.getElementById('dbName').value = config.DB_POSTGRESDB_NAME || 'scraperr';
+                    document.getElementById('dbUrl').value = config.DATABASE_URL || '';
+                    
+                    // Advanced settings
+                    document.getElementById('maxWorkers').value = config.MAX_WORKERS || '4';
+                    document.getElementById('timeout').value = config.REQUEST_TIMEOUT || '30';
+                    document.getElementById('retryAttempts').value = config.RETRY_ATTEMPTS || '3';
+                    document.getElementById('concurrentRequests').value = config.CONCURRENT_REQUESTS || '5';
+                    document.getElementById('rateLimit').value = config.RATE_LIMIT || '60';
+                    
+                    // Security
+                    document.getElementById('jwtSecret').value = config.JWT_SECRET || '';
+                    document.getElementById('sessionSecret').value = config.SESSION_SECRET || '';
+                    document.getElementById('encryptionKey').value = config.ENCRYPTION_KEY || '';
+                    document.getElementById('recaptchaSiteKey').value = config.RECAPTCHA_SITE_KEY || '';
+                    document.getElementById('recaptchaSecretKey').value = config.RECAPTCHA_SECRET_KEY || '';
+                    
+                    // Storage
+                    document.getElementById('storageType').value = config.STORAGE_TYPE || 'local';
+                    document.getElementById('maxFileSize').value = config.MAX_FILE_SIZE || '100';
+                    document.getElementById('allowedFileTypes').value = config.ALLOWED_FILE_TYPES || 'jpg,jpeg,png,pdf,doc,docx,txt,zip';
+                    
+                    updatePreview();
+                    showNotification('Configuración guardada previamente cargada', false);
+                } catch (e) {
+                    console.error('Error loading saved configuration:', e);
+                }
+            }
+            
+            // Update preview initially
+            updatePreview();
+        });
+    </script>
+</body>
+</html>

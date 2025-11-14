@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scraperr Configuration</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="text"],
+        input[type="password"],
+        input[type="number"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .instructions {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-left: 4px solid #007bff;
+            margin-top: 20px;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Scraperr Configuration</h1>
+        
+        <form id="configForm">
+            <div class="form-group">
+                <label for="secretKey">SECRET_KEY:</label>
+                <input type="password" id="secretKey" name="SECRET_KEY" placeholder="Enter your secret key">
+            </div>
+            
+            <div class="form-group">
+                <label for="logLevel">LOG_LEVEL:</label>
+                <select id="logLevel" name="LOG_LEVEL">
+                    <option value="DEBUG">DEBUG</option>
+                    <option value="INFO" selected>INFO</option>
+                    <option value="WARNING">WARNING</option>
+                    <option value="ERROR">ERROR</option>
+                    <option value="CRITICAL">CRITICAL</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="algorithm">ALGORITHM:</label>
+                <input type="text" id="algorithm" name="ALGORITHM" value="HS256" readonly>
+            </div>
+            
+            <div class="form-group">
+                <label for="tokenExpiry">ACCESS_TOKEN_EXPIRE_MINUTES:</label>
+                <input type="number" id="tokenExpiry" name="ACCESS_TOKEN_EXPIRE_MINUTES" value="600" min="1">
+            </div>
+            
+            <div class="form-group">
+                <label for="apiUrl">NEXT_PUBLIC_API_URL:</label>
+                <input type="text" id="apiUrl" name="NEXT_PUBLIC_API_URL" value="http://scraperr_api:8000">
+            </div>
+            
+            <div class="form-group">
+                <label for="serverUrl">SERVER_URL:</label>
+                <input type="text" id="serverUrl" name="SERVER_URL" value="http://scraperr_api:8000">
+            </div>
+            
+            <div class="button-group">
+                <button type="button" onclick="generateSecretKey()">Generate Secret Key</button>
+                <button type="submit">Save Configuration</button>
+            </div>
+        </form>
+        
+        <div id="message"></div>
+        
+        <div class="instructions">
+            <h3>Instructions for Scraperr Configuration:</h3>
+            <ol>
+                <li>Configure your environment variables using the form above</li>
+                <li>Click "Generate Secret Key" to create a new random secret key</li>
+                <li>Click "Save Configuration" to generate your .env file</li>
+                <li>Copy the generated .env file content to /home/ncx/Proyectos/scraperr-local/.env</li>
+                <li>Restart your Docker containers using: <code>make down && make up</code></li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('configForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            saveConfiguration();
+        });
+
+        function generateSecretKey() {
+            // Generate a random 32-byte hex string
+            const array = new Uint8Array(32);
+            window.crypto.getRandomValues(array);
+            const secretKey = Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+            document.getElementById('secretKey').value = secretKey;
+        }
+
+        function saveConfiguration() {
+            const formData = new FormData(document.getElementById('configForm'));
+            let envContent = '# Scraperr Environment Variables\n';
+            
+            for (const [key, value] of formData.entries()) {
+                envContent += `${key}=${value}\n`;
+            }
+            
+            // Create a Blob with the .env content
+            const blob = new Blob([envContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            
+            // Create a temporary link and trigger download
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = '.env';
+            document.body.appendChild(a);
+            a.click();
+            
+            // Clean up
+            setTimeout(() => {
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+                
+                const messageDiv = document.getElementById('message');
+                messageDiv.innerHTML = '<p class="success">Configuration saved! Downloaded .env file. Replace the one in your scraperr-local directory and restart the containers.</p>';
+            }, 100);
+        }
+
+        // Load existing configuration if available
+        window.onload = function() {
+            // This would load from a saved config if we had one
+            // For now, we'll just show the default values
+        };
+    </script>
+</body>
+</html>
