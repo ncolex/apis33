@@ -39,19 +39,20 @@ Esta es una interfaz web avanzada que incluye todas las funcionalidades solicita
 
 ### Usar la interfaz
 
-1. **Autenticación**: Ingresa tu usuario y contraseña para acceder a la interfaz
-2. **Configuración de API**: Configura la URL base de la API (generalmente `http://localhost:8000`)
+1. **Autenticación (real)**: Ingresa usuario/contraseña. La UI llama a `POST /auth/login`; si recibe `access_token`, lo guarda y lo usa como `Bearer` en cada llamada.
+2. **Configuración de API**: Configura la URL base (p.ej., `http://localhost:8000`) y usa el botón "Probar conexión" para validar.
 3. **Ejecutar scraping**: Usa cualquiera de las funciones de scraping disponibles
 4. **Seguimiento en tiempo real**: Observa el progreso de tus trabajos en las barras de progreso
 5. **Contador de elementos**: Mira en tiempo real cuántos elementos se han encontrado
-6. **Detener trabajos**: Usa los botones "Stop Job" para detener trabajos en ejecución
+6. **Detener trabajos**: Usa los botones "Stop"; ahora cancelan solicitudes activas con AbortController
 7. **Ver trabajos recientes**: Consulta la lista de trabajos recientes y su estado
 
 ## Solución de problemas
 
 ### Si no puedes iniciar sesión
-- Verifica que tengas un token JWT válido
-- Si recibes un error de "token expirado", vuelve a autenticarte
+- Verifica que `/auth/login` esté disponible en tu backend
+- La respuesta debe incluir `access_token`; si no, el login seguirá, pero sin Bearer
+- Si recibes "token expirado", vuelve a autenticarte
 
 ### Si los trabajos no se actualizan
 - Asegúrate de que la URL de la API esté correctamente configurada
