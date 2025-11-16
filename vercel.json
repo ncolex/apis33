@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "web-app/**", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/$", "dest": "/web-app/advanced-interface-fixed.html" },
+    { "src": "/web-app/(.*)", "dest": "/web-app/$1" },
+    { "src": "/(.*)", "dest": "/web-app/$1" }
+  ]
+}
+
