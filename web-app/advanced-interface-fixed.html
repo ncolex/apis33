@@ -973,7 +973,10 @@
       <div id="notification" class="notification"></div>
 
       <footer>
-        <span>Scraperr OSINT PWA • Cliente avanzado sobre tu backend <code>scraperr_api</code></span>
+        <span>
+          Scraperr OSINT PWA • Backend:
+          <a id="apiLink" href="#" target="_blank" rel="noopener noreferrer">(no configurado)</a>
+        </span>
       </footer>
     </div>
   </div>
@@ -982,6 +985,7 @@
     // Elements
     const authSection = document.getElementById("authSection");
     const apiConfigSection = document.getElementById("apiConfigSection");
+    const apiLinkEl = document.getElementById("apiLink");
     const testApiBtn = document.getElementById("testApiBtn");
     const apiTestStatus = document.getElementById("apiTestStatus");
     const scrapingSection = document.getElementById("scrapingSection");
@@ -1102,10 +1106,15 @@
       const savedOpenaiKey = localStorage.getItem("openai_api_key");
       if (savedOpenaiKey) openaiKeyInput.value = savedOpenaiKey;
 
+      // Inicializar link del backend en footer
+      const initialApi = (localStorage.getItem('scraperr_api_url') || apiUrlInput.value || '').trim();
+      setApiLink(initialApi);
+
       // Event listeners para guardar configuración
       apiUrlInput.addEventListener("change", () => {
         localStorage.setItem("scraperr_api_url", apiUrlInput.value);
         addLog("📡", "Conexión API actualizada", `Nueva URL: ${apiUrlInput.value}`, "info");
+        setApiLink(apiUrlInput.value);
       });
 
       maxItemsInput.addEventListener("change", () => {
@@ -1496,6 +1505,7 @@
         showNotification('Configura primero la API Base URL', true);
         return;
       }
+      setApiLink(base);
       apiTestStatus.style.display = 'inline-block';
       apiTestStatus.textContent = 'Testing…';
       apiTestStatus.className = 'badge';
@@ -1537,6 +1547,24 @@
         setTimeout(() => { apiTestStatus.style.display = 'none'; }, 3000);
       }
     });
+
+    function normalizeBaseUrl(val) {
+      if (!val) return '';
+      let v = val.trim();
+      if (v.endsWith('/')) v = v.slice(0, -1);
+      return v;
+    }
+
+    function setApiLink(url) {
+      const base = normalizeBaseUrl(url);
+      if (!base) {
+        apiLinkEl.textContent = '(no configurado)';
+        apiLinkEl.removeAttribute('href');
+        return;
+      }
+      apiLinkEl.href = base + '/';
+      apiLinkEl.textContent = base;
+    }
 
     // Función para construir elementos de scraping
     function buildElementsFromSelection() {
