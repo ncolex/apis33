@@ -632,6 +632,10 @@
                 placeholder="Ej: http://localhost:8000"
                 value="http://localhost:8000"
               />
+              <div class="inline-group" style="margin-top: 8px;">
+                <button id="testApiBtn" class="btn secondary">Probar conexión</button>
+                <span id="apiTestStatus" class="badge" style="display:none;">Testing…</span>
+              </div>
               <div class="small-help">
                 Ej: <code>http://localhost:8000</code> (scraperr_api).
               </div>
@@ -978,6 +982,8 @@
     // Elements
     const authSection = document.getElementById("authSection");
     const apiConfigSection = document.getElementById("apiConfigSection");
+    const testApiBtn = document.getElementById("testApiBtn");
+    const apiTestStatus = document.getElementById("apiTestStatus");
     const scrapingSection = document.getElementById("scrapingSection");
     const osintSection = document.getElementById("osintSection");
     const imageSearchSection = document.getElementById("imageSearchSection");
@@ -1258,23 +1264,57 @@
       addLog("🔓", "Sesión iniciada", "Acceso concedido a la interfaz principal", "success");
     }
 
-    // Función para autenticar
-    loginBtn.addEventListener("click", () => {
+    // Función para autenticar (real, guardando Bearer token si la API lo devuelve)
+    loginBtn.addEventListener("click", async () => {
       const username = usernameInput.value.trim();
       const password = passwordInput.value.trim();
+      const base = (localStorage.getItem('scraperr_api_url') || apiUrlInput.value || '').trim();
 
-      // Validación simple - en una implementación real esto sería una llamada API
-      if (username && password) {
-        // Aquí se haría una llamada API real para autenticar
-        // Por ahora, simulamos que la autenticación es exitosa
-        localStorage.setItem("scraperr_authenticated", "true");
-        isAuthenticated = true;
-        showMainInterface();
-        showNotification("Autenticación exitosa");
-        addLog("👤", "Inicio de sesión", `Usuario: ${username}`, "success");
-      } else {
+      if (!username || !password) {
         showNotification("Usuario y contraseña son requeridos", true);
         addLog("❌", "Error de autenticación", "Usuario o contraseña vacíos", "error");
+        return;
+      }
+      if (!base) {
+        showNotification("Configura primero la API Base URL", true);
+        addLog("❌", "API URL requerida", "Configura la API Base URL", "error");
+        return;
+      }
+
+      const loginUrl = (base.endsWith('/') ? base.slice(0, -1) : base) + '/auth/login';
+      addLog("🔐", "Autenticando", `POST ${loginUrl}`, "info");
+      try {
+        const resp = await fetch(loginUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const ct = resp.headers.get('content-type') || '';
+        const data = ct.includes('application/json') ? await resp.json() : null;
+        if (!resp.ok) {
+          const msg = data?.detail || data?.message || resp.statusText;
+          throw new Error(msg || `HTTP ${resp.status}`);
+        }
+
+        const token = data?.access_token || data?.token || data?.accessToken;
+        if (token) {
+          localStorage.setItem('scraperr_token', token);
+          localStorage.setItem('scraperr_authenticated', 'true');
+          isAuthenticated = true;
+          showMainInterface();
+          showNotification("Autenticación exitosa");
+          addLog("✅", "Login OK", "Token guardado en localStorage", "success");
+        } else {
+          // Si no hubo token, considerar autenticado básico para endpoints públicos
+          localStorage.setItem('scraperr_authenticated', 'true');
+          isAuthenticated = true;
+          showMainInterface();
+          showNotification("Login OK (sin token)");
+          addLog("ℹ️", "Login sin token", "API no devolvió access_token", "warning");
+        }
+      } catch (e) {
+        showNotification("Error de autenticación: " + e.message, true);
+        addLog("❌", "Login fallido", e.message, "error");
       }
     });
 
@@ -1285,6 +1325,7 @@
       localStorage.removeItem("scraperr_max_items");
       localStorage.removeItem("gemini_api_key");
       localStorage.removeItem("openai_api_key");
+      localStorage.removeItem("scraperr_token");
       isAuthenticated = false;
       usernameInput.value = "";
       passwordInput.value = "";
@@ -1348,8 +1389,13 @@
       }
     }
 
+    // Control de cancelación global para operaciones activas
+    let currentAbortController = null;
+    let cancelRequested = false;
+
     // Llamada genérica a API corregida para evitar "Body has already been consumed"
-    async function callApi(path, method = "GET", body = null) {
+    // Agrega soporte de AbortController (signal) y tolera respuestas no-JSON
+    async function callApi(path, method = "GET", body = null, signal = null) {
       // Verificar autenticación
       if (!isAuthenticated) {
         showNotification("Debes autenticarte primero", true);
@@ -1370,6 +1416,14 @@
           "Content-Type": "application/json",
         }
       };
+      // Bearer token opcional
+      const bearer = localStorage.getItem('scraperr_token');
+      if (bearer) {
+        options.headers['Authorization'] = `Bearer ${bearer}`;
+      }
+      if (signal) {
+        options.signal = signal;
+      }
 
       if (body) {
         options.body = JSON.stringify(body);
@@ -1382,6 +1436,10 @@
       try {
         response = await fetch(fullUrl, options);
       } catch (networkError) {
+        if (networkError && networkError.name === 'AbortError') {
+          addLog("⏹️", "Operación cancelada", `Solicitud abortada: ${fullUrl}`, "warning");
+          throw networkError;
+        }
         addLog("❌", "Error de red", `No se pudo conectar a la API: ${networkError.message}`, "error");
         showNotification(`Error de red: ${networkError.message}`, true);
         throw new Error(`Error de red: ${networkError.message}`);
@@ -1421,10 +1479,64 @@
         throw new Error(`API error ${response.status}: ${responseText}`);
       }
 
-      // Leer el JSON solo una vez
-      responseData = await response.json();
+      // Leer el JSON solo una vez (tolerar 204/no-JSON)
+      const ct = response.headers.get('content-type') || '';
+      if (response.status === 204 || ct.indexOf('application/json') === -1) {
+        responseData = null;
+      } else {
+        responseData = await response.json();
+      }
       return { data: responseData, response };
     }
+
+    // Probar conexión de API
+    testApiBtn.addEventListener('click', async () => {
+      const base = (localStorage.getItem('scraperr_api_url') || apiUrlInput.value || '').trim();
+      if (!base) {
+        showNotification('Configura primero la API Base URL', true);
+        return;
+      }
+      apiTestStatus.style.display = 'inline-block';
+      apiTestStatus.textContent = 'Testing…';
+      apiTestStatus.className = 'badge';
+      try {
+        // Probar raíz y /docs como fallback
+        const u = base.endsWith('/') ? base.slice(0, -1) : base;
+        let ok = false;
+        try {
+          const { response } = await callApi('/', 'GET');
+          ok = response.ok;
+        } catch (_) {}
+        if (!ok) {
+          const resp = await fetch(`${u}/docs`, { method: 'GET' });
+          ok = resp.ok;
+        }
+        if (ok) {
+          apiTestStatus.textContent = 'OK';
+          apiTestStatus.className = 'badge';
+          apiTestStatus.style.background = 'rgba(34,197,94,.15)';
+          apiTestStatus.style.color = '#22c55e';
+          addLog('✅', 'API OK', `Conexión exitosa a ${base}`, 'success');
+          showNotification('API conectada');
+        } else {
+          apiTestStatus.textContent = 'Fallo';
+          apiTestStatus.className = 'badge';
+          apiTestStatus.style.background = 'rgba(249,115,22,.15)';
+          apiTestStatus.style.color = '#f97316';
+          addLog('❌', 'API fallo', `No responde: ${base}`, 'error');
+          showNotification('No se pudo conectar a la API', true);
+        }
+      } catch (e) {
+        apiTestStatus.textContent = 'Error';
+        apiTestStatus.className = 'badge';
+        apiTestStatus.style.background = 'rgba(249,115,22,.15)';
+        apiTestStatus.style.color = '#f97316';
+        addLog('❌', 'Error test API', e.message, 'error');
+        showNotification('Error probando API: ' + e.message, true);
+      } finally {
+        setTimeout(() => { apiTestStatus.style.display = 'none'; }, 3000);
+      }
+    });
 
     // Función para construir elementos de scraping
     function buildElementsFromSelection() {
@@ -1557,7 +1669,7 @@
     }
 
     // Esperar a que un job termine
-    async function waitForJobCompletion(jobId, maxWaitMs = 60000, intervalMs = 2000) {
+    async function waitForJobCompletion(jobId, maxWaitMs = 60000, intervalMs = 2000, signal = null) {
       const start = Date.now();
       let lastData = null;
       let previousStatus = '';
@@ -1567,8 +1679,11 @@
       jobMetaEl.textContent = `Job ${jobId} – Esperando inicio...`;
 
       while (Date.now() - start < maxWaitMs) {
+        if (cancelRequested) {
+          throw new Error('Operación cancelada por el usuario');
+        }
         try {
-          const { data } = await callApi(`/api/job/${encodeURIComponent(jobId)}`, "GET");
+          const { data } = await callApi(`/api/job/${encodeURIComponent(jobId)}`, "GET", null, signal);
           lastData = data;
 
           const status = (data.status || data.Status || data.state || "").toString();
@@ -1655,6 +1770,10 @@
       if (isScraping) return; // Evitar múltiples clicks
       
       isScraping = true;
+      cancelRequested = false;
+      currentAbortController = new AbortController();
+      cancelRequested = false;
+      currentAbortController = new AbortController();
       try {
         // Toggle the spinner
         scrapeSpinner.style.display = "inline-block";
@@ -1687,7 +1806,7 @@
         };
 
         addLog("📤", "Enviando job", "Petición enviada a la API", "info");
-        const submit = await callApi("/api/submit-scrape-job", "POST", jobBody);
+        const submit = await callApi("/api/submit-scrape-job", "POST", jobBody, currentAbortController.signal);
         jobResponseEl.textContent = JSON.stringify(submit.data, null, 2);
 
         if (!submit.data || !submit.data.id) {
@@ -1708,7 +1827,7 @@
         
         showNotification(`Job ${jobId} enviado; consultando estado...`);
 
-        const jobData = await waitForJobCompletion(jobId);
+        const jobData = await waitForJobCompletion(jobId, 60000, 2000, currentAbortController.signal);
         const maxItems = maxItemsInput.value || "10";
 
         const preview = sliceResultForPreview(jobData?.result || jobData?.Result || jobData, maxItems);
@@ -1732,21 +1851,29 @@
         scrapeText.textContent = "Run Scraping";
         stopScrapeBtn.style.display = "none";
       } catch (e) {
-        addLog("❌", "Error en scraping", e.message, "error");
-        showNotification(e.message, true);
-        setStatus("Error");
+        if (e && (e.name === 'AbortError' || /cancelada/i.test(e.message))) {
+          addLog("⏹️", "Scraping cancelado", "Operación abortada por el usuario", "warning");
+          showNotification("Scraping cancelado");
+        } else {
+          addLog("❌", "Error en scraping", e.message, "error");
+          showNotification(e.message, true);
+          setStatus("Error");
+        }
         // Reset the spinner
         scrapeSpinner.style.display = "none";
         scrapeText.textContent = "Run Scraping";
         stopScrapeBtn.style.display = "none";
       } finally {
         isScraping = false;
+        currentAbortController = null;
       }
     });
 
     // Botón para detener scraping
     stopScrapeBtn.addEventListener("click", () => {
       isScraping = false;
+      cancelRequested = true;
+      try { if (currentAbortController) currentAbortController.abort(); } catch (e) {}
       scrapeSpinner.style.display = "none";
       scrapeText.textContent = "Run Scraping";
       stopScrapeBtn.style.display = "none";
@@ -1821,7 +1948,7 @@
               prompt: `OSINT para query="${query}" en plataforma=${platform}`,
             };
 
-            const response = await callApi("/api/submit-scrape-job", "POST", job);
+            const response = await callApi("/api/submit-scrape-job", "POST", job, currentAbortController.signal);
             if (response.data.id) {
               jobs.push({ platform, jobId: response.data.id, url });
               addLog("✅", "Job creado", `${platform} (ID: ${response.data.id})`, "success");
@@ -1841,7 +1968,7 @@
           addLog("⏳", "Esperando job", `Plataforma: ${job.platform}`, "info");
           
           try {
-            const data = await waitForJobCompletion(job.jobId);
+            const data = await waitForJobCompletion(job.jobId, 60000, 2000, currentAbortController.signal);
             results[job.platform] = data.result || data;
             
             // Contar elementos encontrados para este job específico
@@ -1895,20 +2022,28 @@
         universalText.textContent = "Buscar en múltiples servicios";
         stopUniversalSearchBtn.style.display = "none";
       } catch (e) {
-        addLog("❌", "Error en OSINT", e.message, "error");
-        showNotification(e.message, true);
-        setStatus("Error");
+        if (e && (e.name === 'AbortError' || /cancelada/i.test(e.message))) {
+          addLog("⏹️", "OSINT cancelado", "Operación abortada por el usuario", "warning");
+          showNotification("OSINT cancelado");
+        } else {
+          addLog("❌", "Error en OSINT", e.message, "error");
+          showNotification(e.message, true);
+          setStatus("Error");
+        }
         universalSpinner.style.display = "none";
         universalText.textContent = "Buscar en múltiples servicios";
         stopUniversalSearchBtn.style.display = "none";
       } finally {
         isScraping = false;
+        currentAbortController = null;
       }
     });
 
     // Botón para detener búsqueda OSINT
     stopUniversalSearchBtn.addEventListener("click", () => {
       isScraping = false;
+      cancelRequested = true;
+      try { if (currentAbortController) currentAbortController.abort(); } catch (e) {}
       universalSpinner.style.display = "none";
       universalText.textContent = "Buscar en múltiples servicios";
       stopUniversalSearchBtn.style.display = "none";
@@ -2051,7 +2186,7 @@
             },
             prompt: `OSINT por imagen URL=${imgUrl} en servicio=${t}`,
           };
-          const resp = await callApi("/api/submit-scrape-job", "POST", job);
+          const resp = await callApi("/api/submit-scrape-job", "POST", job, currentAbortController ? currentAbortController.signal : undefined);
           if (resp.data.id) {
             jobs.push({ service: t, jobId: resp.data.id, url });
             addLog("✅", "Job imagen creado", `${t} (ID: ${resp.data.id})`, "success");
@@ -2070,7 +2205,7 @@
           addLog("⏳", "Esperando job imagen", `Servicio: ${job.service}`, "info");
           
           try {
-            const data = await waitForJobCompletion(job.jobId);
+            const data = await waitForJobCompletion(job.jobId, 60000, 2000, currentAbortController ? currentAbortController.signal : undefined);
             results[job.service] = data.result || data;
             
             // Contar elementos encontrados para este job específico

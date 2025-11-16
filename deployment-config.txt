@@ -1,10 +1,8 @@
 # Configuración de Deploy - Scraperr OSINT PWA
-Fecha: vie 14 nov 2025 05:25:08 -03
+Fecha: vie 14 nov 2025 09:53:25 -03
 Versión: 5.2.0
 Estado de los contenedores:
-NAME           IMAGE                            COMMAND                  SERVICE        CREATED       STATUS       PORTS
-scraperr       jpyles0524/scraperr:latest       "docker-entrypoint.s…"   scraperr       3 hours ago   Up 3 hours   0.0.0.0:80->3000/tcp, [::]:80->3000/tcp
-scraperr_api   jpyles0524/scraperr_api:latest   "supervisord -c /etc…"   scraperr_api   3 hours ago   Up 3 hours   5900/tcp, 0.0.0.0:8000->8000/tcp, [::]:8000->8000/tcp
+NAME      IMAGE     COMMAND   SERVICE   CREATED   STATUS    PORTS
 
 Variables de entorno importantes:
 SECRET_KEY=5602a78c351fa8d6c8fd56f50b43ec3beccc8c0c09bf8662644421c19cf37308
