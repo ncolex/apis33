@@ -2,14 +2,17 @@ version: '3.8'
 
 services:
   scraperr:
-    image: jpyles0524/scraperr:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.web
     container_name: scraperr
-    command: ["npm","run","start"]
     environment:
       - NEXT_PUBLIC_API_URL=http://scraperr_api:8000
       - SERVER_URL=http://scraperr_api:8000
     ports:
-      - "80:3000"
+      - "80:80"
+    depends_on:
+      - scraperr_api
     networks:
       - web
 

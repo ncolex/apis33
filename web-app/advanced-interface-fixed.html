@@ -677,14 +677,16 @@
             </div>
           </div>
 
-          <!-- 2. Scraping básico -->
+          <!-- 2. Configuración de Scraping -->
           <div class="section" id="scrapingSection">
             <div class="section-header-row">
-              <h2>2. Scraping básico</h2>
-              <span class="section-sub">Single job</span>
+              <h2>2. Configuración de Scraping</h2>
+              <span class="section-sub">Personaliza tu proceso de scraping</span>
             </div>
+
+            <!-- URL de destino -->
             <div class="form-group">
-              <label for="targetUrl">Target URL</label>
+              <label for="targetUrl">URL de destino</label>
               <input
                 id="targetUrl"
                 type="text"
@@ -699,8 +701,9 @@
               <button class="btn-example" data-url="https://httpbin.org/html">HTML Test</button>
             </div>
 
+            <!-- Configuración del tipo de scraping -->
             <div class="form-group">
-              <label>Tipos de contenido a descargar</label>
+              <label>Tipo de scraping</label>
               <div class="content-type-grid">
                 <div class="content-type-toggle active" data-type="text">Texto</div>
                 <div class="content-type-toggle active" data-type="images">Imágenes</div>
@@ -711,16 +714,39 @@
               </div>
             </div>
 
+            <!-- Configuración de profundidad -->
             <div class="form-group">
-              <label for="elementsSelect">Elements to Extract</label>
+              <label for="scrapingTypeSelect">Tipo de scraping</label>
+              <select id="scrapingTypeSelect">
+                <option value="simple">Simple - Una sola página</option>
+                <option value="multipage" selected>Multilayer - Varias páginas</option>
+                <option value="deep">Profundo - Navegación recursiva</option>
+                <option value="custom">Personalizado - Configuración avanzada</option>
+              </select>
+            </div>
+
+            <!-- Profundidad del scraping -->
+            <div class="form-group">
+              <label for="deepDepthSelect">Profundidad del scraping</label>
+              <select id="deepDepthSelect">
+                <option value="1">1 - Superficial (rápido)</option>
+                <option value="2" selected>2 - Moderado (equilibrado)</option>
+                <option value="3">3 - Profundo (completo)</option>
+                <option value="4">4 - Extensivo (complejo)</option>
+              </select>
+            </div>
+
+            <!-- Configuración de elementos a extraer -->
+            <div class="form-group">
+              <label for="elementsSelect">Elementos a extraer</label>
               <select id="elementsSelect">
-                <option value="default">Default: Quotes, Books, Headings</option>
-                <option value="custom">Custom (edit JSON below)</option>
+                <option value="default">Predeterminado: Basado en contenido</option>
+                <option value="custom">Personalizado (editar JSON)</option>
               </select>
             </div>
 
             <div class="form-group">
-              <label for="advancedElements">Elements personalizados (JSON)</label>
+              <label for="advancedElements">Elementos personalizados (JSON)</label>
               <textarea id="advancedElements" placeholder="Formato: [{name, xpath, url}]">[
   {
     "name": "Quotes",
@@ -736,36 +762,31 @@
               <button class="btn-example-elements" data-elements='[{"name": "Headings", "xpath": "//h1|//h2|//h3", "url": "https://httpbin.org/html"}]'>Headings</button>
             </div>
 
+            <!-- Opciones avanzadas -->
             <div class="form-group">
               <label class="checkbox-label">
                 <input id="multiPageCheckbox" type="checkbox" />
-                Scraping multipágina
+                Habilitar scraping multipágina
               </label>
             </div>
 
             <div class="form-group">
-              <label for="deepDepthSelect">Profundidad (sugerencia para LLM)</label>
-              <select id="deepDepthSelect">
-                <option value="1">1 - Básico</option>
-                <option value="2" selected>2 - Intermedio</option>
-                <option value="3">3 - Profundo</option>
-                <option value="4">4 - Extensivo</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label for="deepHint">Hint (opcional)</label>
+              <label for="deepHint">Instrucciones especiales (opcional)</label>
               <input id="deepHint" type="text" placeholder="Ej: seguir links 'Siguiente', 'Next'..." />
             </div>
             <div class="small-help">
-              La profundidad se envía como pista en el campo <code>prompt</code> del Job.
+              Las instrucciones especiales guían el comportamiento del scraper según tus necesidades específicas.
             </div>
 
-            <button id="runScrapeBtn" class="btn">
-              <span id="scrapeSpinner" class="loading" style="display: none;"></span>
-              <span id="scrapeText">Run Scraping</span>
-            </button>
-            <button id="stopScrapeBtn" class="btn stop" style="display: none;">Stop Job</button>
+            <!-- Botones de acción -->
+            <div class="inline-group">
+              <button id="runScrapeBtn" class="btn">
+                <span id="scrapeSpinner" class="loading" style="display: none;"></span>
+                <span id="scrapeText">Iniciar Scraping</span>
+              </button>
+              <button id="stopScrapeBtn" class="btn stop" style="display: none;">Detener Job</button>
+              <button id="saveConfigBtn" class="btn secondary">Guardar Configuración</button>
+            </div>
           </div>
 
           <!-- 3. Búsqueda universal OSINT -->
@@ -993,6 +1014,7 @@
     const imageSearchSection = document.getElementById("imageSearchSection");
     const apiUrlInput = document.getElementById("apiUrl");
     const targetUrlInput = document.getElementById("targetUrl");
+    const scrapingTypeSelect = document.getElementById("scrapingTypeSelect");
     const elementsSelect = document.getElementById("elementsSelect");
     const advancedElements = document.getElementById("advancedElements");
     const multiPageCheckbox = document.getElementById("multiPageCheckbox");
@@ -1000,6 +1022,7 @@
     const deepHintInput = document.getElementById("deepHint");
     const runScrapeBtn = document.getElementById("runScrapeBtn");
     const stopScrapeBtn = document.getElementById("stopScrapeBtn");
+    const saveConfigBtn = document.getElementById("saveConfigBtn");
     const universalQueryInput = document.getElementById("universalQuery");
     const runUniversalSearchBtn = document.getElementById("runUniversalSearchBtn");
     const stopUniversalSearchBtn = document.getElementById("stopUniversalSearchBtn");
@@ -1105,6 +1128,37 @@
 
       const savedOpenaiKey = localStorage.getItem("openai_api_key");
       if (savedOpenaiKey) openaiKeyInput.value = savedOpenaiKey;
+
+      // Cargar la última configuración guardada
+      const savedConfig = localStorage.getItem("scraperr_last_config");
+      if (savedConfig) {
+        try {
+          const config = JSON.parse(savedConfig);
+          if (config.targetUrl) targetUrlInput.value = config.targetUrl;
+          if (config.scrapingType) scrapingTypeSelect.value = config.scrapingType;
+          if (config.elements) advancedElements.value = config.elements;
+          if (config.multiPage !== undefined) multiPageCheckbox.checked = config.multiPage;
+          if (config.deepDepth) deepDepthSelect.value = config.deepDepth;
+          if (config.deepHint) deepHintInput.value = config.deepHint;
+
+          // Actualizar tipos de contenido seleccionados
+          if (config.contentTypes && Array.isArray(config.contentTypes)) {
+            selectedContentTypes = config.contentTypes;
+            contentTypeToggles.forEach(toggle => {
+              const type = toggle.getAttribute("data-type");
+              if (config.contentTypes.includes(type)) {
+                toggle.classList.add("active");
+              } else {
+                toggle.classList.remove("active");
+              }
+            });
+          }
+
+          addLog("💾", "Configuración cargada", "Se ha cargado la última configuración guardada", "info");
+        } catch (e) {
+          addLog("❌", "Error al cargar configuración", e.message, "error");
+        }
+      }
 
       // Inicializar link del backend en footer
       const initialApi = (localStorage.getItem('scraperr_api_url') || apiUrlInput.value || '').trim();
@@ -1578,8 +1632,9 @@
         }
       }
 
-      // Elementos por defecto según la URL y tipos de contenido seleccionados
+      // Elementos por defecto según la URL, tipos de contenido y profundidad seleccionados
       const url = targetUrlInput.value.toLowerCase();
+      const scrapingType = scrapingTypeSelect.value;
       const elements = [];
 
       if (selectedContentTypes.includes('text')) {
@@ -1629,6 +1684,27 @@
         addLog("🎵", "Elementos de audio detectados", "Configurado scraping de audio", "info");
       }
 
+      // Ajustar elementos según el tipo de scraping
+      switch(scrapingType) {
+        case 'simple':
+          // Para scraping simple, mantener elementos básicos
+          break;
+        case 'multipage':
+          // Añadir elementos para navegación entre páginas
+          elements.push({ name: "NextPageLinks", xpath: "//a[contains(text(), 'Next') or contains(text(), 'Siguiente') or contains(@class, 'next') or contains(@id, 'next')]/@href", url: targetUrlInput.value });
+          addLog("🔗", "Elementos de navegación añadidos", "Links de páginas siguientes incluidos", "info");
+          break;
+        case 'deep':
+          // Añadir elementos para scraping profundo
+          elements.push({ name: "NextPageLinks", xpath: "//a[contains(text(), 'Next') or contains(text(), 'Siguiente') or contains(@class, 'next') or contains(@id, 'next') or contains(@href, 'page') or contains(@href, 'pagina')]/@href", url: targetUrlInput.value });
+          elements.push({ name: "CategoryLinks", xpath: "//a[contains(@href, 'category') or contains(@href, 'categoría') or contains(@class, 'category') or contains(@class, 'categoria')]/@href", url: targetUrlInput.value });
+          addLog("🔗", "Elementos de scraping profundo", "Links de páginas siguientes y categorías incluidos", "info");
+          break;
+        case 'custom':
+          // Usar la configuración personalizada
+          break;
+      }
+
       return elements;
     }
 
@@ -1641,7 +1717,9 @@
         site_map: null,
         collect_media: selectedContentTypes.includes('images') || selectedContentTypes.includes('videos') || selectedContentTypes.includes('audio'),
         return_html: false,
-        custom_cookies: []
+        custom_cookies: [],
+        scraping_type: scrapingTypeSelect.value,
+        depth_level: parseInt(deepDepthSelect.value)
       };
     }
 
@@ -1826,11 +1904,12 @@
         const depth = deepDepthSelect.value;
         const hint = deepHintInput.value.trim();
 
+        const scrapingType = scrapingTypeSelect.value;
         const jobBody = {
           url,
           elements,
           job_options: jobOptions,
-          prompt: `Profundidad deseada: ${depth}. Tipos de contenido: ${selectedContentTypes.join(', ')}. Hint: ${hint || "sin hint"}`,
+          prompt: `Tipo de scraping: ${scrapingType}. Profundidad deseada: ${depth}. Tipos de contenido: ${selectedContentTypes.join(', ')}. Hint: ${hint || "sin hint"}`,
         };
 
         addLog("📤", "Enviando job", "Petición enviada a la API", "info");
@@ -2453,6 +2532,51 @@
       configSection.style.display = configSection.style.display === "block" ? "none" : "block";
       const action = configSection.style.display === "block" ? "abierta" : "cerrada";
       addLog("⚙️", "Configuración avanzada", `Sección de configuración ${action}`, "info");
+    });
+
+    // Event listener para guardar configuración
+    saveConfigBtn.addEventListener("click", () => {
+      const config = {
+        targetUrl: targetUrlInput.value,
+        scrapingType: scrapingTypeSelect.value,
+        contentTypes: selectedContentTypes,
+        elements: advancedElements.value,
+        multiPage: multiPageCheckbox.checked,
+        deepDepth: deepDepthSelect.value,
+        deepHint: deepHintInput.value
+      };
+
+      localStorage.setItem("scraperr_last_config", JSON.stringify(config));
+      showNotification("Configuración guardada");
+      addLog("💾", "Configuración guardada", "La configuración actual se ha guardado", "success");
+    });
+
+    // Event listener para el selector de tipo de scraping
+    scrapingTypeSelect.addEventListener("change", () => {
+      const scrapingType = scrapingTypeSelect.value;
+      addLog("🔄", "Tipo de scraping cambiado", `Nuevo tipo: ${scrapingType}`, "info");
+
+      // Ajustar opciones según el tipo de scraping seleccionado
+      switch(scrapingType) {
+        case 'simple':
+          // Deshabilitar scraping multipágina
+          multiPageCheckbox.checked = false;
+          deepDepthSelect.value = "1";
+          break;
+        case 'multipage':
+          // Habilitar scraping multipágina
+          multiPageCheckbox.checked = true;
+          deepDepthSelect.value = "2";
+          break;
+        case 'deep':
+          // Habilitar scraping multipágina y profundidad alta
+          multiPageCheckbox.checked = true;
+          deepDepthSelect.value = "3";
+          break;
+        case 'custom':
+          // Dejar configuración personalizada como está
+          break;
+      }
     });
   </script>
 </body>

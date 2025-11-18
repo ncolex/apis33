@@ -1,5 +1,5 @@
 # Configuración de Deploy - Scraperr OSINT PWA
-Fecha: vie 14 nov 2025 09:53:25 -03
+Fecha: lun 17 nov 2025 21:45:20 -03
 Versión: 5.2.0
 Estado de los contenedores:
 NAME      IMAGE     COMMAND   SERVICE   CREATED   STATUS    PORTS
